@@ -1,0 +1,48 @@
+[
+    {
+        "caption": "Preferences",
+        "mnemonic": "n",
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "AGSBS",
+                        "children":
+                        [
+                            {
+                                "command": "open_file", 
+                                "args": {"file": "${packages}/AGSBS/Default (Linux).sublime-keymap",
+                                "platform": "Linux"
+                                },
+
+                                "caption": "Shortcuts"
+                            },
+                            {
+                                "command": "open_file", 
+                                "args": {"file": "${packages}/AGSBS/Default (Windows).sublime-keymap",
+                                "platform": "Windows"
+                                },
+
+                                "caption": "Shortcuts"
+                            },
+                            {
+                                "command": "open_file", 
+                                "args": {"file": "${packages}/AGSBS/Default (OSX).sublime-keymap",
+                                "platform": "OSX"
+                                },
+
+                                "caption": "Shortcuts"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

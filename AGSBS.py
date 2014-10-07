@@ -16,6 +16,7 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
     def on_done(self, input):
         str = input.split('|')
         path = sublime.windows()[0].folders()[0]
+
         if str[0].lower() == "buch":
             number_of_capitals = str[1]
             create_folder_structure_book(path, number_of_capitals)        
@@ -239,7 +240,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         """
         link = "Bildbeschreibung von " +input
         print link
-        heading_description = '\n## '+link +'##\n'
+        heading_description = '\n\n## '+link
         link = link.lower().replace(" ","-")
         
         #[![Alternativtext]  (bilder/bild)](bilder.html#bildbeschreibung-von-bild)
@@ -260,7 +261,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         #count =  fd.read
         fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
         os.close(fd)
-        heading_level_one = '# Bilderbeschreibungen # \n'
+        heading_level_one = '# Bilderbeschreibungen \n \n'
         heading_level_one = heading_level_one.encode('utf-8').strip()
         with open(base +os.sep + 'bilder.md', 'r+') as fd:
             line_count = len(fd.readlines())
@@ -269,7 +270,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
                 fd.write(heading_level_one)               
 
             fd.write(heading_description)  
-            fd.write("### TODO Beschreibung ergänzen ###") 
+            fd.write("\n\n ### TODO Beschreibung ergänzen ###") 
         
 
     def on_done_anchor(self, input):
