@@ -5,7 +5,7 @@ import re
 import codecs, re, sys
 import collections
 import json
-
+import subprocess
 
 class CreateStructureCommand(sublime_plugin.ApplicationCommand):
     def run(self):
@@ -19,9 +19,10 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
             number_of_capitals = str[1]
             create_folder_structure_book(path, number_of_capitals)        
         else:
-            lecture_name = input.replace(" ","_")
-            create_folder_structure_lecture(path, lecture_name)
-
+            #lecture_name = input.replace(" ","_")
+            #create_folder_structure_lecture(path, lecture_name)            
+            number_of_capitals = str[1]
+            create_folder_structure_book(path, number_of_capitals)   
     
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
@@ -75,8 +76,11 @@ def create_folder_structure_book(path, input):
     
     print path[0]
     current_driver = path[0] +":"
-    command = "cd " +path +" & " +current_driver +" & matuc conf init "
-    print command
+    if (sys.platform.lower().find('linux')>= 0):
+         command = "gnome-terminal -e 'bash -c \"cd "+path+"; matuc conf init \"'"
+    if (sys.platform.lower().find('wind')>= 0):
+        command = "cd " +path +" & " +current_driver +" & matuc conf init "    
+    print "create_folder_structure_book "+command
     os.system(command)
 
 def create_md_file(foldername, filename):
@@ -234,25 +238,43 @@ class AddTagCommand(sublime_plugin.TextCommand):
 
 class CmdCommand(sublime_plugin.TextCommand):
     def run(self, edit, function):        
-        file_name=self.view.file_name()
-        path=file_name.split("\\")            
+        file_name=self.view.file_name()        
+        osSeparator = ""
+        if (sys.platform.lower().find('windows')>= 0):        
+            osSeparator = "\\"
+        else:
+            osSeparator = os.sep
+        path=file_name.split(osSeparator)            
         current_driver=path[0]
-        path.pop()
-        current_directory="\\".join(path)
-        
-        #command = "cd "+current_directory+" & matuc conv "                
+        path.pop()    
+        current_directory=osSeparator.join(path)
+
         path = self.view.file_name()
 
         if function == "createHTML":
-            #command = "cd " +current_directory +"& " +current_driver +" & start cmd "
-            command = "matuc conv " + file_name 
-        elif function == "checkMarkdown":                            
-            command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
+            if (sys.platform.lower().find('win')>= 0):
+            #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
+                command = "matuc conv " + file_name 
+            if (sys.platform.lower().find('linux')>= 0):
+                print "createHTML"
+                command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
+                print command
+        elif function == "checkMarkdown":  
+            if (sys.platform.lower().find('linux')>= 0):
+                # os is  linux
+                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                               
+            if (sys.platform.lower().find('win')>= 0):
+                # os is windows
+                command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
         elif function == "createAll": 
             print "TODO createAll by Pressing F6"
             #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
-        elif function == "showHTML": 
-            command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
+        elif function == "showHTML":
+            if (sys.platform.lower().find('linux')>= 0): 
+                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
+            if (sys.platform.lower().find('win')>= 0):
+                command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
+        
         os.system(command)        
 
 class InsertPanelCommand(sublime_plugin.TextCommand):    
@@ -540,3 +562,4 @@ if __name__ == '__main__':
     #test_markdown_parser()
     #test_file_walk()
     test_index2markdown_TOC()
+
