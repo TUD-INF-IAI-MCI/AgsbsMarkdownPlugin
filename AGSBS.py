@@ -6,8 +6,6 @@ import codecs, re, sys
 import collections
 import json
 
-from MAGSBS import *
-
 
 class CreateStructureCommand(sublime_plugin.ApplicationCommand):
     def run(self):
@@ -24,6 +22,7 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
             lecture_name = input.replace(" ","_")
             create_folder_structure_lecture(path, lecture_name)
 
+    
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
@@ -73,6 +72,12 @@ def create_folder_structure_book(path, input):
         filename = k_str
         create_n_folder(path, filename)
         i = i + 1        
+    
+    print path[0]
+    current_driver = path[0] +":"
+    command = "cd " +path +" & " +current_driver +" & matuc conf init "
+    print command
+    os.system(command)
 
 def create_md_file(foldername, filename):
     fn  = foldername + os.sep +filename  +".md" 
@@ -104,7 +109,7 @@ class CreateFolderPanelCommand(sublime_plugin.TextCommand):
         self.view.window().show_input_panel("Kapitelanzahl", "", self.on_done, self.on_change, self.on_cancel)
        
         #create_File(filename+"/text.md", "Helloworld")
-    def on_done(self, input):
+    def on_done(self, input):        
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
         if input == -1:
@@ -126,9 +131,8 @@ class CreateFolderPanelCommand(sublime_plugin.TextCommand):
             filename = k_str+ ".md"
             self.create_n_folder(foldername, filename)
             i = i + 1
-        #create folder and kapitel md
-        #self.view.insert(edit, target, "filename") 
-       # create_File(filename+"/text.md", "Helloworld")
+        # init .lecture_meta_data.dcxml
+
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
@@ -170,23 +174,54 @@ class AddTagCommand(sublime_plugin.TextCommand):
         screenful = self.view.visible_region()
         (row,col) = self.view.rowcol(self.view.sel()[0].begin())
         target = self.view.text_point(row, 0)
-        if tag in ['h', 'em', 'strong']:
-                self.view.insert(edit, target, markdown_str)
+        # strong and em
+        if tag in ['em', 'strong']:                
                 (row,col) = self.view.rowcol(self.view.sel()[0].begin()) 
-                word = self.view.word(target)
-                movecursor = len(word)   
-                diff = 0
-                if movecursor > 0:
-                    diff = movecursor/2        
-                strg = str(diff)
-                #elf.view.insert(edit, target, strg)
-                target = self.view.text_point(row, diff)
-                self.view.sel().clear()
-                self.view.sel().add(sublime.Region(target))
-                self.view.show(target)
-
-        elif tag in ['blockquote', 'ul', 'ol', 'code']:
-            self.view.insert(edit, target, markdown_str)
+                for region in self.view.sel():
+                    if not region.empty():
+                        selString = self.view.substr(region)                       
+                        word = self.view.word(target)                                               
+                        movecursor = len(word)   
+                        diff = 0
+                        if movecursor > 0:
+                            diff = movecursor/2        
+                        strg = str(diff)
+                    
+                        target = self.view.text_point(row, diff)
+                        self.view.sel().clear() 
+                        if region.a < region.b:
+                            firstPos =  region.a
+                            endPos = region.b
+                        else:
+                            firstPos =  region.b    
+                            endPos = region.a                           
+                        endPos = endPos + len(markdown_str)                        
+                        self.view.insert(edit,firstPos,markdown_str)                        
+                        self.view.insert(edit,endPos,markdown_str)
+        #heading
+        elif tag in ['h']:
+              for region in self.view.sel():
+                    if not region.empty():
+                        firstPos = 0
+                        if region.a < region.b:
+                            firstPos =  region.a
+                        else:
+                            firstPos =  region.b
+                        self.view.insert(edit,firstPos,markdown_str)       
+        # list ol, ul, code
+        #elif tag in ['ul', 'ol', 'code']:
+            #self.view.insert(edit, target, markdown_str)
+        # blockqoute
+        elif tag in ['blockqoute', 'ul', 'ol', 'code']:
+            for region in self.view.sel():
+                    if not region.empty():
+                        lines = self.view.split_by_newlines(region)
+                        for i,line in enumerate(lines):
+                            if tag == 'ol':
+                                number = 1 +i                                     
+                                self.view.insert(edit, line.a+3*i, str(number)+'. ')                                
+                            else:                                            
+                                self.view.insert(edit, line.a+2*i, markdown_str)
 
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
@@ -197,13 +232,34 @@ class AddTagCommand(sublime_plugin.TextCommand):
             "| col 2 is      | centered      |   $12 |\n"
             "| zebra stripes | are neat      |    $1 |\n")
 
+class CmdCommand(sublime_plugin.TextCommand):
+    def run(self, edit, function):        
+        file_name=self.view.file_name()
+        path=file_name.split("\\")            
+        current_driver=path[0]
+        path.pop()
+        current_directory="\\".join(path)
+        
+        #command = "cd "+current_directory+" & matuc conv "                
+        path = self.view.file_name()
 
-class InsertPanelCommand(sublime_plugin.TextCommand):
-    def run(self, edit, tag):
-        if tag == 'img ausgelagert':
-            self.view.window().show_input_panel("Bild-URL", "Name der Bilddatei eintragen. Die Bildbeschreibung wird ausgelagert", self.on_done_img, self.on_change, self.on_cancel)
+        if function == "createHTML":
+            #command = "cd " +current_directory +"& " +current_driver +" & start cmd "
+            command = "matuc conv " + file_name 
+        elif function == "checkMarkdown":                            
+            command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
+        elif function == "createAll": 
+            print "TODO createAll by Pressing F6"
+            #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
+        elif function == "showHTML": 
+            command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
+        os.system(command)        
+
+class InsertPanelCommand(sublime_plugin.TextCommand):    
+
+    def run(self, edit, tag):        
         if tag == 'img':
-            self.view.window().show_input_panel("Bild-URL", "Name der Bilddatei eintragen.", self.on_done_img_normal, self.on_change, self.on_cancel)
+            self.view.window().show_input_panel("Bild-URL", "Name der Bilddatei eintragen. z.b. bild.jpg", self.on_done_img_file, self.on_change, self.on_cancel)                               
         elif tag =='a':
             self.view.window().show_input_panel("Link-URL", "Link_eintragen", self.on_done_link, self.on_change, self.on_cancel)
         elif tag =='a name':
@@ -216,37 +272,50 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         if input == -1:
             return
        # if user picks from list, return the correct entry
-        markdown = '######- Seite ' +input +' -######'
+        markdown = '||  Seite ' +input
         self.view.run_command(
             "insert_my_text", {"args":            
             {'text': markdown}})
 
-    def on_done_img_normal(self, input):
-        markdown ='![ALternativtext](bilder/' +input +')'
+    def on_done_img_file(self, input):
+        self.pictureURL = input
+        self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, self.on_change, self.on_cancel)                                               
+#        markdown ='![ALternativtext](bilder/' +input +')'
        # markdown = '[Bildbeschreibung von ' +input +'](bilder.html#' + link +')'
-        self.view.run_command(
-            "insert_my_text", {"args":            
-            {'text': markdown}})
+ #       self.view.run_command(
+  #          "insert_my_text", {"args":            
+   #         {'text': markdown}})
+    def on_done_img_description(self,description):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1        
+        if description == -1:
+            return
 
-    def on_done_img(self, input):
+
+        if (len(description) >= 80):
+            self.description_extern(description)
+        else:
+            # short description
+            text = '!['+description+'](bilder/' +self.pictureURL +')'
+            self.pictureURL + " " +description
+            self.view.run_command("insert_my_text", {"args":            
+                {'text': text}})        
+
+
+    def description_extern(self, description):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
-        if input == -1:
+        if description == -1:
             return
        # if user picks from list, return the correct entry
         
         """
             link to the alternativ description
         """
-        link = "Bildbeschreibung von " +input
-        print link
+        link = "Bildbeschreibung von " +self.pictureURL
         heading_description = '\n\n## '+link
-        link = link.lower().replace(" ","-")
-        
-        #[![Alternativtext]  (bilder/bild)](bilder.html#bildbeschreibung-von-bild)
-        markdown ='[![Beschreibung ausgelagert](bilder/' +input +')](bilder.html' +'#' +link +')'
-        print link
-       # markdown = '[Bildbeschreibung von ' +input +'](bilder.html#' + link +')'
+        link = link.lower().replace(" ","-")            
+        markdown ='[![Beschreibung ausgelagert](bilder/' +self.pictureURL +')](bilder.html' +'#' +link +')'               
         self.view.run_command(
             "insert_my_text", {"args":            
             {'text': markdown}})
@@ -270,7 +339,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
                 fd.write(heading_level_one)               
 
             fd.write(heading_description)  
-            fd.write("\n\n ### TODO Beschreibung ergänzen ###") 
+            fd.write("\n\n"+description) 
         
 
     def on_done_anchor(self, input):
@@ -290,7 +359,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         if input == -1:
             return
        # if user picks from list, return the correct entry
-        markdown = '[Alternativtext](' +input +')'
+        markdown = '[Linktext aendern](' +input +')'
         self.view.run_command(
             "insert_my_text", {"args":            
             {'text': markdown}})
@@ -430,7 +499,7 @@ class CreateTocFileCommand(sublime_plugin.ApplicationCommand):
 class SaveAndReloadCommand(sublime_plugin.WindowCommand):
     def run(self):                        
         self.window.run_command("reload_view")
-        #self.window.run_command("save")
+        
         
 
 
@@ -462,10 +531,10 @@ def test_file_walk():
 # -- if not imported but run as main module, test functionality --
 
 def test_index2markdown_TOC():
-    print "test_index2markdown_TOC"
+   # print "test_index2markdown_TOC"
     idx = test_file_walk()
     c = index2markdown_TOC(idx, 'de')
-    print(c.get_markdown_page())
+    #print(c.get_markdown_page())
 
 if __name__ == '__main__':
     #test_markdown_parser()
