@@ -36,6 +36,7 @@ There are shortcuts for the generation of content like folder structure, convert
 The following shortcuts helps during the transcriptions 
 
 | Shortcut   | Selection required | Explanation                                                               |
+| ---------- | --------------     | ------------------------------------------------------------------------- |
 | alt+h      | yes                | insert heading markdown for level 1, multiple input is supported          |
 | alt+r      | no                 | horizontal row                                                            |
 | alt+i      | yes                | markdown syntax for italic                                                |
