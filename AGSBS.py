@@ -6,8 +6,10 @@ import codecs, re, sys
 import collections
 import json
 import subprocess
-import thread
 
+"""
+{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} },
+"""
 class CreateStructureCommand(sublime_plugin.ApplicationCommand):
     def run(self):
         #sublime.active_window().show_input_panel("Titel und Kapitel/VL Anzahl eingeben", "Titel | Kapitelanzahl fuer ein Buch oder Thema der Vorlesungsfolie", self.on_done, self.on_change, self.on_cancel)        
@@ -18,19 +20,15 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         #current_driver = os.path(folderDir)[0]   
         currentDriver = folderDir.split(os.sep)[0]
         current_directory = folderDir.split(os.sep)[1]
-        current_directory = os.sep.join(folderDir)
-        if str[0].lower() == "buch":
-            number_of_capitals = str[1]
-            create_folder_structure_book(path, number_of_capitals)        
-        else:
+        current_directory = os.sep.join(folderDir)      
             #later 
-            if (sys.platform.lower().find('win')== 0):
-                # os is windows  
-                print "folderDir " +folderDir                          
-                command = "start cmd& cd "+folderDir+" & matuc new " +str[0] + '-c ' + str[1] \
-                           +"& cd " +folderDir +os.sep +str[0] +" & matuc conf -s " +'\"'+str[0] +'\" update & exit'
+        if (sys.platform.lower().find('win')== 0):
+            # os is windows                                         
+            command = "start cmd & cd "+folderDir+" & matuc new " +str[0] + '-c ' + str[1] \
+                        +"& cd " +folderDir +os.sep +str[0] +" & matuc conf -s " +'\"'+str[0] +'\" update & exit'
+        
 
-            os.system(command)   
+        os.system(command)   
     
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
@@ -54,133 +52,6 @@ def count_md_file(path):
                 
     return count
 
-def create_folder_structure_lecture(path, name):    
-    filecount = count_md_file(path)
-    if filecount < 10:
-        name = "vorlesung_0" +str(filecount+1) +"_"+name
-    else:
-        name = "vorlesung_" +str(filecount) +"_"+name
-    """
-     name = vorlesung_xx_name_der_vorlesung
-    """
-    create_md_file(path, name)
-
-
-"""
-    input ist die anzahl der Kapitel
-"""
-def create_folder_structure_book(path, input):
-    input_int = int(input)
-    i = 1
-    k_str = ""
-    while i <= input_int:
-        if i < 10:
-            k_str ="k0" + str(i)
-        else:
-            k_str = "k" + str(i)        
-        filename = k_str
-        create_n_folder(path, filename)
-        i = i + 1        
-    
-    print path[0]
-    current_driver = path[0] +":"
-    if (sys.platform.lower().find('linux')>= 0):
-         command = "gnome-terminal -e 'bash -c \"cd "+path+"; matuc conf init \"'"
-    if (sys.platform.lower().find('wind')>= 0):
-        command = "cd " +path +" & " +current_driver +" & matuc conf init "    
-    print "create_folder_structure_book "+command
-    os.system(command)
-
-
-
-def create_md_file(foldername, filename):
-    fn  = foldername + os.sep +filename  +".md" 
-    fd = os.open(fn, os.O_RDWR|os.O_CREAT) 
-    text = u'Fügen Sie hier die ueberschrift ein \n============= '
-    os.write(fd,text.encode('utf-8'))
-    os.close(fd)
-
-def create_n_folder( foldername, filename):
-        if not os.path.exists(foldername):
-            parent = os.path.split(foldername)[0]
-            if not os.path.exists(parent):
-                create_folder(parent, filename)                
-        #if os.path.exists(foldername):
-        """
-         path =  buch/k01
-        """
-        path = foldername +os.sep +filename
-        os.mkdir(path) 
-        os.mkdir(path+os.sep+"bilder") 
-        create_md_file(path, filename)                       
-        
-
-"""
-{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} },
-"""
-class CreateFolderPanelCommand(sublime_plugin.TextCommand):
-    def run(self, arg, tag):
-        self.view.window().show_input_panel("Kapitelanzahl", "", self.on_done, self.on_change, self.on_cancel)
-       
-        #create_File(filename+"/text.md", "Helloworld")
-    def on_done(self, input):        
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
-        if input == -1:
-            return
-        path = self.view.file_name()
-        base = os.path.split(path)[0]
-        if not input.isdigit():
-            return
-        input_int = int(input)
-        i = 1
-        k_str = ""
-        while i <= input_int:
-            if i < 10:
-                k_str = "/k0" + str(i)
-            else:
-                k_str = "/k" + str(i)
-            foldername = base + k_str
-            filename = k_str+ ".md"
-            self.create_n_folder(foldername, filename)
-            i = i + 1
-        # init .lecture_meta_data.dcxml
-
-    def on_change(self, input):
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
-        if input == -1:
-            return
-    def on_cancel(self, input):
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
-        if input == -1:
-            return
-
-    def create_n_folder(self, foldername, filename):
-        if not os.path.exists(foldername):
-            parent = os.path.split(foldername)[0]
-            if not os.path.exists(parent):
-                self.create_folder(parent, filename)
-        os.mkdir(foldername)
-        fn  = foldername + filename        
-        fd = os.open(fn, os.O_RDWR|os.O_CREAT)        
-        os.write(fd, "Fuegen Sie hier die Überschrift ein \n")
-        os.write(fd, "============= \n")
-        os.close(fd)
-
-
-
-    def create_File(filename, text):
-        v = sublime.version()
-        if v >= '3000':
-            f = open(filename, 'w', encoding='utf-8')
-            f.write(text)
-            f.close()
-        else: # 2.x
-            f = open(filename, 'w')
-            f.write(text.encode('utf-8'))
-            f.close()
 
 class AddTagCommand(sublime_plugin.TextCommand):
      def run(self, edit, tag, markdown_str):
@@ -277,9 +148,9 @@ class CmdCommand(sublime_plugin.TextCommand):
                     command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                                           
                 if (sys.platform.lower().find('win')== 0):
                     # os is windows  
-                    print "folder " +folder                          
-                    command = "cd " +folder +" & " +current_driver +" start cmd & matuc mk " +'\"'\
-                              +folder + '\" > error.txt & exit'
+                    print "folder " +str(current_directory)                          
+                    command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +'\"'\
+                              +os.path.basename(path) + '\" > error.txt & exit'
                     #later 
                     #loc = '\"'+current_directory+'\"'                
                     #proc = subprocess.Popen(["matuc","mk", loc], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -292,7 +163,7 @@ class CmdCommand(sublime_plugin.TextCommand):
         elif function == "showHTML":
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
-            if (sys.platform.lower().find('wind')>= 0):
+            if (sys.platform.lower().find('win')== 0):
                 command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
         
         os.system(command)        

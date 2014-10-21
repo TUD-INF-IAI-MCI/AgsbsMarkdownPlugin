@@ -58,3 +58,5 @@ docs/_build/
 # PyBuilder
 target/
 >>>>>>> f967482a2dd1ef8a11b6fad5bcd0321c14a9917b
+/*.sublime-project
+/*.sublime-workspace
