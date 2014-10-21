@@ -6,23 +6,31 @@ import codecs, re, sys
 import collections
 import json
 import subprocess
+import thread
 
 class CreateStructureCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        sublime.windows()[0].show_input_panel("Was bearbeiten Sie", "Buch|Kapitelanzahl fuer ein Buch oder Thema der Vorlesungsfolie", self.on_done, self.on_change, self.on_cancel)
-       
+        #sublime.active_window().show_input_panel("Titel und Kapitel/VL Anzahl eingeben", "Titel | Kapitelanzahl fuer ein Buch oder Thema der Vorlesungsfolie", self.on_done, self.on_change, self.on_cancel)        
+        sublime.active_window().show_input_panel("Titel und Kapitel/VL Anzahl eingeben", "Titel | 2", self.on_done, self.on_change, self.on_cancel)        
     def on_done(self, input):
         str = input.split('|')
-        path = sublime.windows()[0].folders()[0]
-
+        folderDir = sublime.active_window().folders()[0]
+        #current_driver = os.path(folderDir)[0]   
+        currentDriver = folderDir.split(os.sep)[0]
+        current_directory = folderDir.split(os.sep)[1]
+        current_directory = os.sep.join(folderDir)
         if str[0].lower() == "buch":
             number_of_capitals = str[1]
             create_folder_structure_book(path, number_of_capitals)        
         else:
-            #lecture_name = input.replace(" ","_")
-            #create_folder_structure_lecture(path, lecture_name)            
-            number_of_capitals = str[1]
-            create_folder_structure_book(path, number_of_capitals)   
+            #later 
+            if (sys.platform.lower().find('win')== 0):
+                # os is windows  
+                print "folderDir " +folderDir                          
+                command = "start cmd& cd "+folderDir+" & matuc new " +str[0] + '-c ' + str[1] \
+                           +"& cd " +folderDir +os.sep +str[0] +" & matuc conf -s " +'\"'+str[0] +'\" update & exit'
+
+            os.system(command)   
     
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
@@ -83,6 +91,8 @@ def create_folder_structure_book(path, input):
     print "create_folder_structure_book "+command
     os.system(command)
 
+
+
 def create_md_file(foldername, filename):
     fn  = foldername + os.sep +filename  +".md" 
     fd = os.open(fn, os.O_RDWR|os.O_CREAT) 
@@ -106,7 +116,7 @@ def create_n_folder( foldername, filename):
         
 
 """
-{ "keys": ["ctrl+alt+n"], "command": "create_structure", "args": {"tag": ""} },
+{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} },
 """
 class CreateFolderPanelCommand(sublime_plugin.TextCommand):
     def run(self, arg, tag):
@@ -127,7 +137,6 @@ class CreateFolderPanelCommand(sublime_plugin.TextCommand):
         k_str = ""
         while i <= input_int:
             if i < 10:
-
                 k_str = "/k0" + str(i)
             else:
                 k_str = "/k" + str(i)
@@ -240,19 +249,19 @@ class CmdCommand(sublime_plugin.TextCommand):
     def run(self, edit, function):        
         file_name=self.view.file_name()        
         osSeparator = ""
-        if (sys.platform.lower().find('windows')>= 0):        
+        command = ""
+        if (sys.platform.lower().find('win')== 0):        
             osSeparator = "\\"
         else:
-            osSeparator = os.sep
-        path=file_name.split(osSeparator)            
-        current_driver=path[0]
+            osSeparator = os.sep    
+        path = file_name.split(osSeparator)            
+        current_driver = path[0]
         path.pop()    
-        current_directory=osSeparator.join(path)
+        current_directory = osSeparator.join(path)
 
-        path = self.view.file_name()
-
+        path = self.view.file_name()        
         if function == "createHTML":
-            if (sys.platform.lower().find('win')>= 0):
+            if (sys.platform.lower().find('win')== 0):
             #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
                 command = "matuc conv " + file_name 
             if (sys.platform.lower().find('linux')>= 0):
@@ -260,19 +269,30 @@ class CmdCommand(sublime_plugin.TextCommand):
                 command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
                 print command
         elif function == "checkMarkdown":  
-            if (sys.platform.lower().find('linux')>= 0):
-                # os is  linux
-                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                               
-            if (sys.platform.lower().find('win')>= 0):
-                # os is windows
-                command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
+            openFolders = self.view.window().folders()
+            for folder in openFolders:
+                files = os.walk
+                if (sys.platform.lower().find('linux')>= 0):
+                    # os is  linux                
+                    command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                                           
+                if (sys.platform.lower().find('win')== 0):
+                    # os is windows  
+                    print "folder " +folder                          
+                    command = "cd " +folder +" & " +current_driver +" start cmd & matuc mk " +'\"'\
+                              +folder + '\" > error.txt & exit'
+                    #later 
+                    #loc = '\"'+current_directory+'\"'                
+                    #proc = subprocess.Popen(["matuc","mk", loc], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    #proc.wait()
+                    #data = "\n".join(proc.communicate())                
+                    #print data                                    
         elif function == "createAll": 
             print "TODO createAll by Pressing F6"
             #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
         elif function == "showHTML":
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
-            if (sys.platform.lower().find('win')>= 0):
+            if (sys.platform.lower().find('wind')>= 0):
                 command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
         
         os.system(command)        
