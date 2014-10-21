@@ -25,7 +25,7 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
             #later 
         if (sys.platform.lower().find('win')== 0):
             # os is windows                                         
-            command = "start cmd & cd "+folderDir+" & matuc new " +str[0] + '-c ' + str[1] \
+            command = "start cmd & cd "+folderDir+" & matuc new " +'\"'+str[0] +'\" -c ' + str[1] \
                         +"& cd " +folderDir +os.sep +str[0] +" & matuc conf -s " +'\"'+str[0] +'\" update & exit'
         
 
