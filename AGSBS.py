@@ -6,6 +6,7 @@ import codecs, re, sys
 import collections
 import json
 import subprocess
+import glob
 
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} },
@@ -52,6 +53,19 @@ def count_md_file(path):
                 
     return count
 
+def findMarkdownFile(path):
+    result =[]
+    os.chdir(path)
+    print "findMarkdownFile "
+    for directoryname, directory_list, file_list in os.walk(path):
+
+        print "file_list " +str(file_list)
+        print "directoryname " +str(directoryname)
+        print "directory_list " +str(directory_list)
+        for file in file_list:
+            if file.endswith(".md"):
+                result.append(os.path.join(directoryname, file))
+    return result
 
 class AddTagCommand(sublime_plugin.TextCommand):
      def run(self, edit, tag, markdown_str):
@@ -139,9 +153,10 @@ class CmdCommand(sublime_plugin.TextCommand):
                 print "createHTML"
                 command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
                 print command
-        elif function == "checkMarkdown":  
+        elif function == "checkMarkdown":              
             openFolders = self.view.window().folders()
             for folder in openFolders:
+                md_files = findMarkdownFile(folder)
                 files = os.walk
                 if (sys.platform.lower().find('linux')>= 0):
                     # os is  linux                
