@@ -21,12 +21,13 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         #current_driver = os.path(folderDir)[0]   
         currentDriver = folderDir.split(os.sep)[0]
         current_directory = folderDir.split(os.sep)[1]
-        current_directory = os.sep.join(folderDir)      
-            #later 
+        current_directory = os.sep.join(folderDir)              
+        title = convertString(str[0])
+        chapterNumber = str[1]           
         if (sys.platform.lower().find('win')== 0):
             # os is windows                                         
-            command = "start cmd & cd "+folderDir+" & matuc new " +'\"'+str[0] +'\" -c ' + str[1] \
-                        +"& cd " +folderDir +os.sep +str[0] +" & matuc conf -s " +'\"'+str[0] +'\" update & exit'
+            command = "start cmd & cd "+folderDir+" & matuc new " +'\"'+title +'\" -c ' + chapterNumber \
+                        +"& cd " +folderDir +os.sep +title +" & matuc conf -s " +'\"'+title +'\" update & exit'
         
 
         os.system(command)   
@@ -41,6 +42,25 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         #  if canceled, index is returned as  -1
         if input == -1:
             return
+
+def convertString(input_string):
+    
+    replacements ={
+        u'ä': 'ae',
+        u'ü': 'ue',
+        u'ö': 'oe',
+        u'Ä': 'Ae',
+        u'Ü': 'Ue',
+        u'Ö': 'Oe',
+        u'ß': 'ss',        
+        '\s+': '_'
+    }
+    input_string = input_string.strip() 
+    for key,value in replacements.items():
+        input_string = re.sub(key,value,input_string,0)
+    print input_string     
+    return input_string
+
 """
 count md files in path
 """
