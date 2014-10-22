@@ -28,8 +28,8 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
             # os is windows                                         
             command = "start cmd & cd "+folderDir+" & matuc new " +'\"'+title +'\" -c ' + chapterNumber \
                         +"& cd " +folderDir +os.sep +title +" & matuc conf -s " +'\"'+title +'\" update & exit'
-        
-
+        if(sys.platform.lower().find('darwin')== 0):
+            command = "ls"
         os.system(command)   
     
     def on_change(self, input):
@@ -57,8 +57,7 @@ def convertString(input_string):
     }
     input_string = input_string.strip() 
     for key,value in replacements.items():
-        input_string = re.sub(key,value,input_string,0)
-    print input_string     
+        input_string = re.sub(key,value,input_string,0) 
     return input_string
 
 """
