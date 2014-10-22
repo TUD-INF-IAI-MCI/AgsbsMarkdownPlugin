@@ -252,10 +252,10 @@ class CmdCommand(sublime_plugin.TextCommand):
         path = self.view.file_name()
 
         if function == "createHTML":
-            if (sys.platform.lower().find('win')>= 0):
+            if (sys.platform.lower().find('wind')>= 0):
             #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
                 command = "matuc conv " + file_name 
-            if (sys.platform.lower().find('linux')>= 0):
+            elif (sys.platform.lower().find('linux')>= 0):
                 print "createHTML"
                 command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
                 print command
@@ -263,16 +263,19 @@ class CmdCommand(sublime_plugin.TextCommand):
             if (sys.platform.lower().find('linux')>= 0):
                 # os is  linux
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                               
-            if (sys.platform.lower().find('win')>= 0):
+            elif (sys.platform.lower().find('wind')>= 0):
                 # os is windows
                 command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
+            elif (sys.platform.lower().find('darwin')>= 0):
+                # os is os x - darwin
+                command
         elif function == "createAll": 
             print "TODO createAll by Pressing F6"
             #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
         elif function == "showHTML":
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
-            if (sys.platform.lower().find('win')>= 0):
+            if (sys.platform.lower().find('wind')>= 0):
                 command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
         
         os.system(command)        
