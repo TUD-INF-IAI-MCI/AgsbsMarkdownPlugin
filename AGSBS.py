@@ -292,12 +292,12 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         os.close(fd)
         heading_level_one = '# Bilderbeschreibungen \n \n'
         heading_level_one = heading_level_one.encode('utf-8').strip()
-        with open(base +os.sep + 'bilder.md', 'r+') as fd:
+        with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf8") as fd:
             line_count = len(fd.readlines())
-            # add heading_level_one
             if line_count <=0:
-                fd.write(heading_level_one)               
+                fd.write(heading_level_one) 
 
+        with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf8") as fd:            
             fd.write(heading_description)  
             fd.write("\n\n"+description) 
         
