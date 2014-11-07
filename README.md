@@ -37,17 +37,17 @@ The following shortcuts helps during the transcriptions
 
 | Shortcut   | Selection required | Explanation                                                               |
 | ---------- | --------------     | ------------------------------------------------------------------------- |
-| alt+h      | yes                | insert heading markdown for level 1, multiple input is supported          |
-| alt+r      | no                 | horizontal row                                                            |
-| alt+i      | yes                | markdown syntax for italic                                                |
-| alt+s      | yes                | markdown syntax for strong/bold                                           |
-| alt+o      | yes                | ordered list                                                              |
-| alt+u      | yes                | unordered list                                                            |
-| alt+q      | yes                | quotes                                                                    |
-| alt+t      | no                 | table syntax                                                              |
-| alt+c      | yes                | insert tabs for code format                                               |
-| alt+l      | no                 | markdown syntax for a link, input the link text and URL via inputs fields |
-| alt+p      | no                 | add syntax for page, input page number below                              |
-| ctrl+alt+i | no                 | markdown syntax for image and alternative description, input via text fields                     |
+| ALT+SHIFT+h      | yes                | insert heading markdown for level 1, multiple input is supported          |
+| ALT+SHIFT+r      | no                 | horizontal row                                                            |
+| ALT+SHIFT+i      | yes                | markdown syntax for italic                                                |
+| ALT+SHIFT+s      | yes                | markdown syntax for strong/bold                                           |
+| ALT+SHIFT+o      | yes                | ordered list                                                              |
+| ALT+SHIFT+u      | yes                | unordered list                                                            |
+| ALT+SHIFT+q      | yes                | quotes                                                                    |
+| ALT+SHIFT+t      | no                 | table syntax                                                              |
+| ALT+SHIFT+c      | yes                | insert tabs for code format                                               |
+| ALT+SHIFT+l      | no                 | markdown syntax for a link, input the link text and URL via inputs fields |
+| ALT+SHIFT+p      | no                 | add syntax for page, input page number below                              |
+| CTRL+ALT+i | no                 | markdown syntax for image and alternative description, input via text fields                     |
 
 
