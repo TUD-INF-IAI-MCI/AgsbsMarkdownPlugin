@@ -153,7 +153,7 @@ class CmdCommand(sublime_plugin.TextCommand):
     def run(self, edit, function):        
         file_name=self.view.file_name()        
         osSeparator = ""
-        command = ""
+        command = ""        
         if (sys.platform.lower().find('win')== 0):        
             osSeparator = "\\"
         else:
@@ -161,13 +161,13 @@ class CmdCommand(sublime_plugin.TextCommand):
         path = file_name.split(osSeparator)            
         current_driver = path[0]
         path.pop()    
-        current_directory = osSeparator.join(path)
-
+        current_directory = osSeparator.join(path)        
         path = self.view.file_name()        
         if function == "createHTML":
             if (sys.platform.lower().find('win')== 0):
             #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
-                command = "matuc conv " + file_name 
+                command = "matuc conv \"" + file_name +"\"" 
+                print command
             elif (sys.platform.lower().find('linux')>= 0):
                 print "createHTML"
                 command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
@@ -176,34 +176,33 @@ class CmdCommand(sublime_plugin.TextCommand):
             if (sys.platform.lower().find('linux')>= 0):
                 # os is  linux
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                               
-            elif (sys.platform.lower().find('wind')>= 0):
-                # os is windows
-                command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"            
+            elif (sys.platform.lower().find('win')== 0):                            
+                command = "cd \"" +current_directory +"\" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"                            
             elif (sys.platform.lower().find('darwin')>= 0):
                 # os is os x - darwin
                 print "not implemented yet"
-        elif function == "checkMarkdown":              
-            openFolders = self.view.window().folders()
-            for folder in openFolders:
-                md_files = findMarkdownFile(folder)
-                files = os.walk
-                if (sys.platform.lower().find('linux')>= 0):
-                    # os is  linux                
-                    command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                                           
-                elif (sys.platform.lower().find('win')== 0):
-                    # os is windows  
-                    print "folder " +str(current_directory)                          
-                    command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +'\"'\
-                              +os.path.basename(path) + '\" > error.txt & exit'
-                    #later 
-                    #loc = '\"'+current_directory+'\"'                
-                    #proc = subprocess.Popen(["matuc","mk", loc], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                    #proc.wait()
-                    #data = "\n".join(proc.communicate())                
-                    #print data 
-                elif (sys.platform.lower().find('darwin')>= 0):
-                # os is os x - darwin
-                    print "not implemented yet"                                 
+        # elif function == "checkMarkdown":              
+        #     openFolders = self.view.window().folders()
+        #     for folder in openFolders:
+        #         md_files = findMarkdownFile(folder)
+        #         files = os.walk
+        #         if (sys.platform.lower().find('linux')>= 0):
+        #             # os is  linux                
+        #             command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                                           
+        #         elif (sys.platform.lower().find('win')== 0):
+        #             # os is windows  
+        #             print "folder " +str(current_directory)                          
+        #             command = "cd " +current_directory +" & " +current_driver +" start cmd & matuc mk " +'\"'\
+        #                       +os.path.basename(path) + '\" > error.txt & exit'
+        #             #later 
+        #             #loc = '\"'+current_directory+'\"'                
+        #             #proc = subprocess.Popen(["matuc","mk", loc], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        #             #proc.wait()
+        #             #data = "\n".join(proc.communicate())                
+        #             #print data 
+        #         elif (sys.platform.lower().find('darwin')>= 0):
+        #         # os is os x - darwin
+        #             print "not implemented yet"                                 
         elif function == "createAll": 
             print "TODO createAll by Pressing F6"
             #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
@@ -211,7 +210,7 @@ class CmdCommand(sublime_plugin.TextCommand):
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
             if (sys.platform.lower().find('win')== 0):
-                command = "cd " +current_directory +"& " +current_driver +" start cmd &" +file_name + "& exit"
+                command = "cd \"" +current_directory +"\" & " +current_driver +" start cmd &" +file_name + "& exit"
         
         os.system(command)        
 
