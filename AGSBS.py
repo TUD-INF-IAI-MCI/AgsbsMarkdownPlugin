@@ -27,13 +27,15 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         command = ""
         if (sys.platform.lower().find('win')== 0):
             folderDir = folderDir.encode('iso-8859-15') 
+            print "test"
+            print folderDir.decode('iso-8859-15') 
             command = "matuc new \"" +folderDir + "\"" + " -c "+chapterNumber.encode('iso-8859-15') \
                       + "& cd \"" +folderDir +"\" & matuc conf -s \"" +title.encode('iso-8859-15') +"\" update"                                                         
         if(sys.platform.lower().find('darwin')== 0):
             command = "ls"   
         
         os.system(command)
-        
+
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
@@ -153,7 +155,8 @@ class AddTagCommand(sublime_plugin.TextCommand):
 
 class CmdCommand(sublime_plugin.TextCommand):
     def run(self, edit, function):        
-        file_name=self.view.file_name()        
+        folderDir = sublime.active_window().folders()[0].replace("\\","\\\\").encode('iso-8859-15')
+        file_name=self.view.file_name().encode('iso-8859-15')        
         osSeparator = ""
         command = ""        
         if (sys.platform.lower().find('win')== 0):        
@@ -162,9 +165,11 @@ class CmdCommand(sublime_plugin.TextCommand):
             osSeparator = os.sep    
         path = file_name.split(osSeparator)            
         current_driver = path[0]
-        path.pop()    
-        current_directory = osSeparator.join(path)        
-        path = self.view.file_name()        
+        path.pop()            
+        current_directory = osSeparator.join(path)    
+
+        print current_directory  
+        path = self.view.file_name()                  
         if function == "createHTML":
             if (sys.platform.lower().find('win')== 0):
             #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
@@ -177,9 +182,10 @@ class CmdCommand(sublime_plugin.TextCommand):
         elif function == "checkMarkdown":  
             if (sys.platform.lower().find('linux')>= 0):
                 # os is  linux
-                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path) + " > error.txt  \"'"                               
-            elif (sys.platform.lower().find('win')== 0):                            
-                command = "cd \"" +current_directory +"\" & " +current_driver +" start cmd & matuc mk " +os.path.basename(path) + " > error.txt & exit"                            
+                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path).encode('iso-8859-15') + " > error.txt  \"'"                               
+            elif (sys.platform.lower().find('win')== 0):                                                                                        
+                command = "cd \""+folderDir+"\" & " +current_driver +" & matuc mk " +folderDir + " > " +"error.txt"                
+                
             elif (sys.platform.lower().find('darwin')>= 0):
                 # os is os x - darwin
                 print "not implemented yet"
@@ -209,11 +215,11 @@ class CmdCommand(sublime_plugin.TextCommand):
             print "TODO createAll by Pressing F6"
             #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
         elif function == "showHTML":
+            #  Pressing F7
             if (sys.platform.lower().find('linux')>= 0): 
-                command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; "+file_name+ "\"'"                               
-            if (sys.platform.lower().find('win')== 0):
-                command = "cd \"" +current_directory +"\" & " +current_driver +" start cmd &" +file_name + "& exit"
-        
+                command = "gnome-terminal -e 'bash -c \"cd "+current_directory.encode('iso-8859-15')+"; "+file_name+ "\"'"                               
+            if (sys.platform.lower().find('win')== 0):                                
+                command = file_name
         os.system(command)        
 
 class InsertPanelCommand(sublime_plugin.TextCommand):    
