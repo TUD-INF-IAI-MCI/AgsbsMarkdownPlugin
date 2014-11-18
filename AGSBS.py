@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import sublime, sublime_plugin
 import os
 import re
@@ -17,21 +17,23 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         sublime.active_window().show_input_panel("Titel und Kapitel/VL Anzahl eingeben", "Titel | 2", self.on_done, self.on_change, self.on_cancel)        
     def on_done(self, input):
         str = input.split('|')
-        folderDir = sublime.active_window().folders()[0]
+        folderDir = sublime.active_window().folders()[0].replace("\\","\\\\")                
         #current_driver = os.path(folderDir)[0]   
         currentDriver = folderDir.split(os.sep)[0]
-        current_directory = folderDir.split(os.sep)[1]
+        current_directory = folderDir.split(os.sep)[1]              
         current_directory = os.sep.join(folderDir)              
         title = convertString(str[0])
-        chapterNumber = str[1]           
+        chapterNumber = str[1]                   
+        command = ""
         if (sys.platform.lower().find('win')== 0):
-            # os is windows                                         
-            command = "start cmd & cd "+folderDir+" & matuc new " +'\"'+title +'\" -c ' + chapterNumber \
-                        +"& cd " +folderDir +os.sep +title +" & matuc conf -s " +'\"'+title +'\" update & exit'
+            folderDir = folderDir.encode('iso-8859-15') 
+            command = "matuc new \"" +folderDir + "\"" + " -c "+chapterNumber.encode('iso-8859-15') \
+                      + "& cd \"" +folderDir +"\" & matuc conf -s \"" +title.encode('iso-8859-15') +"\" update"                                                         
         if(sys.platform.lower().find('darwin')== 0):
-            command = "ls"
-        os.system(command)   
-    
+            command = "ls"   
+        
+        os.system(command)
+        
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
