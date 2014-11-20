@@ -13,7 +13,7 @@ After the creation of the Markdown files a customized pandoc converter is used f
 The plugin offered different functions to fulfil our guidelines, add Markdown content and 
 helps unknown transcribers to create markdown-files.
 
-Also a validation is possible.
+Also a validation is possible by pressing key F3
 
 
 ### Shortcut
@@ -25,29 +25,29 @@ There are shortcuts for the generation of content like folder structure, convert
 | Shortcut | Explanation                                |
 | -----    | -------                                    |
 | F2       | create structure                           |
-| F3       | check the selected Markdown-file           |
+| F3       | check all Markdown-file                    |
 | F4       | create toc-file (index.md)                 |
 | F5       | convert the selected Markdown-file to HTML |
-| F6       | not support yes                            |
+| F6       | generated HTML from all Markdown-files     |
 | F7       | show the selected HTML in browser          |
 
 #### Shortcuts for the transcription
 
 The following shortcuts helps during the transcriptions 
 
-| Shortcut   | Selection required | Explanation                                                               |
-| ---------- | --------------     | ------------------------------------------------------------------------- |
-| ALT+SHIFT+h      | yes                | insert heading markdown for level 1, multiple input is supported          |
-| ALT+SHIFT+r      | no                 | horizontal row                                                            |
-| ALT+SHIFT+i      | yes                | markdown syntax for italic                                                |
-| ALT+SHIFT+s      | yes                | markdown syntax for strong/bold                                           |
-| ALT+SHIFT+o      | yes                | ordered list                                                              |
-| ALT+SHIFT+u      | yes                | unordered list                                                            |
-| ALT+SHIFT+q      | yes                | quotes                                                                    |
-| ALT+SHIFT+t      | no                 | table syntax                                                              |
-| ALT+SHIFT+c      | yes                | insert tabs for code format                                               |
-| ALT+SHIFT+l      | no                 | markdown syntax for a link, input the link text and URL via inputs fields |
-| ALT+SHIFT+p      | no                 | add syntax for page, input page number below                              |
-| CTRL+ALT+i | no                 | markdown syntax for image and alternative description, input via text fields                     |
+| Shortcut    | Selection required | Explanation                                                                  |
+| ----------  | --------------     | -------------------------------------------------------------------------    |
+| ALT+SHIFT+h | yes                | insert heading markdown for level 1, multiple input is supported             |
+| ALT+SHIFT+r | no                 | horizontal row                                                               |
+| ALT+SHIFT+i | yes                | markdown syntax for italic                                                   |
+| ALT+SHIFT+s | yes                | markdown syntax for strong/bold                                              |
+| ALT+SHIFT+o | yes                | ordered list                                                                 |
+| ALT+SHIFT+u | yes                | unordered list                                                               |
+| ALT+SHIFT+q | yes                | quotes                                                                       |
+| ALT+SHIFT+t | no                 | table syntax                                                                 |
+| ALT+SHIFT+c | yes                | insert tabs for code format                                                  |
+| ALT+SHIFT+l | no                 | markdown syntax for a link, input the link text and URL via inputs fields    |
+| ALT+SHIFT+p | no                 | add syntax for page, input page number below                                 |
+| CTRL+ALT+i  | no                 | markdown syntax for image and alternative description, input via text fields |
 
 
