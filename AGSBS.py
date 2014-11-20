@@ -128,11 +128,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
                             firstPos =  region.a
                         else:
                             firstPos =  region.b
-                        self.view.insert(edit,firstPos,markdown_str)       
-        # list ol, ul, code
-        #elif tag in ['ul', 'ol', 'code']:
-            #self.view.insert(edit, target, markdown_str)
-        # blockqoute
+                        self.view.insert(edit,firstPos,markdown_str)               
         elif tag in ['blockqoute', 'ul', 'ol', 'code']:
             for region in self.view.sel():
                     if not region.empty():
@@ -167,19 +163,18 @@ class CmdCommand(sublime_plugin.TextCommand):
         current_driver = path[0]
         path.pop()            
         current_directory = osSeparator.join(path)    
-
-        print current_directory  
         path = self.view.file_name()                  
         if function == "createHTML":
-            if (sys.platform.lower().find('win')== 0):
-            #command = "cd " +current_directory +"& " +current_driver +" & start cmd "                    
-                command = "matuc conv \"" + file_name +"\"" 
-                print command
-            elif (sys.platform.lower().find('linux')>= 0):
-                print "createHTML"
-                command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                               
-                print command
-        elif function == "checkMarkdown":  
+            # test whether selected file is a markdown
+            if(file_name.decode('iso-8859-15').lower().find(".md") != -1):
+                if (sys.platform.lower().find('win')== 0):                
+                    command = "matuc conv \""  + file_name  +"\" 2> error.txt"                  
+                elif (sys.platform.lower().find('linux')>= 0):                    
+                    command = "gnome-terminal -e 'bash -c \"matuc conv "+ file_name +"\"'"                                               
+            else:
+                return
+
+        elif function == "checkMarkdown":              
             if (sys.platform.lower().find('linux')>= 0):
                 # os is  linux
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path).encode('iso-8859-15') + " > error.txt  \"'"                               
@@ -211,15 +206,16 @@ class CmdCommand(sublime_plugin.TextCommand):
         #         elif (sys.platform.lower().find('darwin')>= 0):
         #         # os is os x - darwin
         #             print "not implemented yet"                                 
-        elif function == "createAll": 
-            print "TODO createAll by Pressing F6"
-            #command = "cd " +current_directory +"& " +current_driver +" start cmd & matuc mk " +file_name + " > error.txt"
+        elif function == "createAll":                         
+            parent = os.path.abspath(os.path.join(current_directory.decode('iso-8859-15'),os.pardir))                        
+            command = "matuc master " +parent.encode('iso-8859-15')            
         elif function == "showHTML":
             #  Pressing F7
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory.encode('iso-8859-15')+"; "+file_name+ "\"'"                               
             if (sys.platform.lower().find('win')== 0):                                
                 command = file_name
+        
         os.system(command)        
 
 class InsertPanelCommand(sublime_plugin.TextCommand):    
