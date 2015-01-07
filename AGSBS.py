@@ -179,7 +179,7 @@ class CmdCommand(sublime_plugin.TextCommand):
                 # os is  linux
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory+"; matuc mk " +os.path.basename(path).encode('iso-8859-15') + " > error.txt  \"'"                               
             elif (sys.platform.lower().find('win')== 0):                                                                                        
-                command = "cd \""+folderDir+"\" & " +current_driver +" & matuc mk " +folderDir + " > " +"error.txt"                
+                command = "cd \""+folderDir+"\" & " +current_driver +" & matuc mk \"" +folderDir + "\" > " +"error.txt"                
                 
             elif (sys.platform.lower().find('darwin')>= 0):
                 # os is os x - darwin
@@ -206,16 +206,22 @@ class CmdCommand(sublime_plugin.TextCommand):
         #         elif (sys.platform.lower().find('darwin')>= 0):
         #         # os is os x - darwin
         #             print "not implemented yet"                                 
-        elif function == "createAll":                         
-            parent = os.path.abspath(os.path.join(current_directory.decode('iso-8859-15'),os.pardir))                        
-            command = "matuc master " +parent.encode('iso-8859-15')            
+        elif function == "createAll":   
+            if (sys.platform.lower().find('win')== 0):           
+                parent = os.path.abspath(os.path.join(current_directory.decode('iso-8859-15'),os.pardir))                        
+                command = "matuc master \"" +parent.encode('iso-8859-15')+"\""
+            if (sys.platform.lower().find('linux')== 0): 
+                print "TODO CreateAll for linux"
+            if (sys.platform.lower().find('darwin')== 0): 
+                print "TODO CreateAll for OS X"
+
         elif function == "showHTML":
             #  Pressing F7
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory.encode('iso-8859-15')+"; "+file_name+ "\"'"                               
             if (sys.platform.lower().find('win')== 0):                                
                 command = file_name
-        
+        print command
         os.system(command)        
 
 class InsertPanelCommand(sublime_plugin.TextCommand):    
@@ -430,13 +436,14 @@ class Move_caret_backCommand(sublime_plugin.TextCommand):
 """
 class CreateTocFileCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        base = sublime.windows()[0].folders()[0] 
+        print "ToDo"
+        # base = sublime.windows()[0].folders()[0] 
     
-        c = create_index(base)
-        c.walk()        
-        index = c.get_index()
-        md_index = index2markdown_TOC(index)
-        WriteIndex2File(base,md_index.get_markdown_page())
+        # c = create_index(base)
+        # c.walk()        
+        # index = c.get_index()
+        # md_index = index2markdown_TOC(index)
+        # WriteIndex2File(base,md_index.get_markdown_page())
 
 #erfordert datei
 # class CreateTocCommand(sublime_plugin.TextCommand):
