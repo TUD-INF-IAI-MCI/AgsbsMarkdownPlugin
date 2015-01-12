@@ -27,13 +27,16 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         command = ""
         if (sys.platform.lower().find('win')== 0):
             folderDir = folderDir.encode('iso-8859-15') 
-            print "test"
             print folderDir.decode('iso-8859-15') 
             command = "matuc new \"" +folderDir + "\"" + " -c "+chapterNumber.encode('iso-8859-15') \
                       + "& cd \"" +folderDir +"\" & matuc conf -s \"" +title.encode('iso-8859-15') +"\" update"                                                         
         if(sys.platform.lower().find('darwin')== 0):
-            command = "ls"   
-        
+            command = "open ls > test.txt"
+            subprocess.call('open ls > test.txt', shell=True)
+        if(sys.platform.lower().find('linux')== 0):
+            command = "todo"
+
+        print command
         os.system(command)
 
     def on_change(self, input):
@@ -241,7 +244,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
         if input == -1:
             return
        # if user picks from list, return the correct entry
-        markdown = '||  Seite ' +input
+        markdown = '||  - Seite ' +input + ' -'
         self.view.run_command(
             "insert_my_text", {"args":            
             {'text': markdown}})
