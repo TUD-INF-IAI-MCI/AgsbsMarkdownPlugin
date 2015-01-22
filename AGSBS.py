@@ -1,4 +1,5 @@
 ﻿# -*- coding: utf-8 -*-
+from __future__ import print_function
 import sublime, sublime_plugin
 import os
 import re
@@ -7,6 +8,8 @@ import collections
 import json
 import subprocess
 import glob
+
+
 
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} },
@@ -27,8 +30,8 @@ class CreateStructureCommand(sublime_plugin.ApplicationCommand):
         command = ""
         if (sys.platform.lower().find('win')== 0):
             folderDir = folderDir.encode('iso-8859-15') 
-            print "test"
-            print folderDir.decode('iso-8859-15') 
+            print("test")
+            print(folderDir.decode('iso-8859-15'))
             command = "matuc new \"" +folderDir + "\"" + " -c "+chapterNumber.encode('iso-8859-15') \
                       + "& cd \"" +folderDir +"\" & matuc conf -s \"" +title.encode('iso-8859-15') +"\" update"                                                         
         if(sys.platform.lower().find('darwin')== 0):
@@ -79,12 +82,11 @@ def count_md_file(path):
 def findMarkdownFile(path):
     result =[]
     os.chdir(path)
-    print "findMarkdownFile "
+    print("findMarkdownFile")
     for directoryname, directory_list, file_list in os.walk(path):
-
-        print "file_list " +str(file_list)
-        print "directoryname " +str(directoryname)
-        print "directory_list " +str(directory_list)
+        print("file_list",file_list)
+        print("directoryname",directoryname)
+        print("directory_list",directory_list)
         for file in file_list:
             if file.endswith(".md"):
                 result.append(os.path.join(directoryname, file))
@@ -183,7 +185,7 @@ class CmdCommand(sublime_plugin.TextCommand):
                 
             elif (sys.platform.lower().find('darwin')>= 0):
                 # os is os x - darwin
-                print "not implemented yet"
+                print("not implemented yet")
         # elif function == "checkMarkdown":              
         #     openFolders = self.view.window().folders()
         #     for folder in openFolders:
@@ -211,17 +213,17 @@ class CmdCommand(sublime_plugin.TextCommand):
                 parent = os.path.abspath(os.path.join(current_directory.decode('iso-8859-15'),os.pardir))                        
                 command = "matuc master \"" +parent.encode('iso-8859-15')+"\""
             if (sys.platform.lower().find('linux')== 0): 
-                print "TODO CreateAll for linux"
+                print("TODO CreateAll for linux")
             if (sys.platform.lower().find('darwin')== 0): 
-                print "TODO CreateAll for OS X"
+                print("TODO CreateAll for OS X")
 
         elif function == "showHTML":
             #  Pressing F7
             if (sys.platform.lower().find('linux')>= 0): 
                 command = "gnome-terminal -e 'bash -c \"cd "+current_directory.encode('iso-8859-15')+"; "+file_name+ "\"'"                               
             if (sys.platform.lower().find('win')== 0):                                
-                command = file_name
-        print command
+                command = "\""+file_name+"\" & exit" 
+        print(command)
         os.system(command)        
 
 class InsertPanelCommand(sublime_plugin.TextCommand):    
@@ -436,7 +438,7 @@ class Move_caret_backCommand(sublime_plugin.TextCommand):
 """
 class CreateTocFileCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        print "ToDo"
+        print("ToDo")
         # base = sublime.windows()[0].folders()[0] 
     
         # c = create_index(base)
@@ -477,7 +479,7 @@ class SaveAndReloadCommand(sublime_plugin.WindowCommand):
 def WriteIndex2File(base,content):
 
     indexFile = base + os.sep + "index.md"
-    print "Save 2 file " +indexFile
+    print("Save 2 file ",indexFile)
     fd = os.open(indexFile, os.O_RDWR|os.O_CREAT)
     text = content.encode('utf-8').strip()
     os.write(fd, text)
