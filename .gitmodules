@@ -1,0 +1,3 @@
+[submodule "AGSBS-infrastructure"]
+	path = AGSBS-infrastructure
+	url = https://github.com/TUD-INF-IAI-MCI/AGSBS-infrastructure.git
