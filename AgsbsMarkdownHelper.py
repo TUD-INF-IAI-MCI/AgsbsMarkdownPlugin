@@ -8,16 +8,24 @@ import collections
 
 VERSION = int(sublime.version())
 
-reloader = "MAGSBS.reloader"
+reloader = "reloader"
 
 if VERSION > 3000:
 	print("sublime version is higher >= 3")
-	from .MAGSBS import reloader	
-	from .MAGSBS.master import *
-	from .MAGSBS.config import *
+	#from .MAGSBS-infrastructure.MAGSBS import reloader	
+	#from .MAGSBS.master import *
+	from .agsbs_infrastructure.MAGSBS.master import *
+	from .agsbs_infrastructure.MAGSBS.config import *
+	from .agsbs_infrastructure.MAGSBS.errors import *
+	from .agsbs_infrastructure.MAGSBS.filesystem import *
+	from .agsbs_infrastructure.MAGSBS.mparser import *
+	from .agsbs_infrastructure.MAGSBS.errors import *
+	from .agsbs_infrastructure.MAGSBS.pandocfilters import *
+	from .agsbs_infrastructure.MAGSBS.pandoc import *
+	#from .MAGSBS.config import *
 	#from  .MAGSBS.quality_assurance import *
-	from .MAGSBS.matuc import *
-	from .MAGSBS.lib.enum import *
+	#from .MAGSBS.matuc import *
+	#from .MAGSBS.lib.enum import *
 	
 else: 
 	print("sublime version  < 3")
@@ -47,8 +55,14 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     	path = os.path.dirname(self.view.window().active_view().file_name())
     	if(Debug):
     		console = Console(self.view)
-    		console.printMessage(self.view,path)
-    		m = master.Master(sublime.packages_path())
+    		console.printMessage(self.view,path)    		
+    		for key in sys.modules.keys():
+    			if key.startswith("AgsbsMarkdownPlugin"):
+    				print(key)
+    		path = os.path.join(sublime.packages_path())
+    		print(path)
+    		m = Master(path)
+    		#m.run()
 
 """
 { "keys": ["f3"], "command": "cmd" , "args": {"function": "checkMarkdown"} }
@@ -64,7 +78,9 @@ class CmdCommand(sublime_plugin.TextCommand):
     		debug_message = "todo " + function
     	elif function == "createHTML":
     		#create html from open md.file
+    		p = pandoc()
     		md_file = self.view.window().active_view().file_name()
+
     		debug_message = "md_file " +md_file 		
     		print()
     	elif function == "createAll":
@@ -142,4 +158,6 @@ class Console():
 		print("########BEGIN DEBUG-OUTPUT#########\n")
 		print(message)
 		print("\n########END DEBUG-OUTPUT#########")  
+
+
 
