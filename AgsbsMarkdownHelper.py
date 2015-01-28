@@ -45,6 +45,7 @@ settings = sublime.load_settings("Agsbshelper.sublime-settings")
 global Debug
 Debug = settings.get("debug")
 global console
+console = Console(None)
 
 
 global messageBox
@@ -160,7 +161,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		sublime.active_window().show_input_panel("Spalten|Zeilen", "Spalten|Zeilen", self.on_done, self.on_change, self.on_cancel)
 	def on_done(self, input):
-		print("TODOTABLE")
+		self.createTable(input)
 	def on_change(self, input):
         #  if user cancels with Esc key, do nothing
         #  if canceled, index is returned as  -1
@@ -171,6 +172,42 @@ class InsertTableCommand(sublime_plugin.TextCommand):
         #  if canceled, index is returned as  -1
 		if input == -1:
 			return
+	def createTable(self, input):
+		try:
+			cols = int(input.split("|")[0])
+			rows = int(input.split("|")[1])
+		except ValueError:
+			messageBox.showMessageBox("Geben Sie die Spalten und Zeilen getrennt mit einem \"|\" an. \n"
+				"Zum Beispiel für eine Tabelle mit 3 Spalten und 5 Reihen geben Sie \n"
+				"3|5 ein!")
+			return
+		
+		#if(	settings.get("table_default_values"))
+		markdown =""
+		for r in range(0,rows):
+			markdown += "|"
+			for c in range(0,cols): 
+				cellValue = ""
+				if(	settings.get("table_default_values")):
+					cn = c + 1 #colnumber
+					rn = r + 1 #rownumber
+					print("#######rn",r)
+					cellValue = "Wert für Spalte %d und Zeile %d" % (cn,rn)
+				markdown += cellValue + "|"
+			if(r == 0): 
+				markdown += "\n" # line break
+				markdown += "|"	
+				for c in range(0,cols):
+					markdown += "----------|"
+			# add separator
+			markdown += "\n" # line break for next row
+		markdown += "\n" # final line break		
+		if(Debug):
+			message = "Table with \n\t %d columns\n\t %d rows \n" % (cols, rows)
+			message += "Generated markdown is \n" +markdown
+			console.printMessage(self.view, message)		
+		# insert markdown
+		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
    # elif tag in ['table']:
    #          self.view.insert(edit, target, "| Tables        | Are           | Cool  | \n" 
@@ -235,6 +272,11 @@ class AddTagCommand(sublime_plugin.TextCommand):
 #
 # Below this are only helpers
 #
+
+class InsertMyText(sublime_plugin.TextCommand):
+	def run(self, edit, args):
+		self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+
 class MessageBox():
 	def __init__(self):
 		return

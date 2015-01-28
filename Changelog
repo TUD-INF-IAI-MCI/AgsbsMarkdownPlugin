@@ -6,6 +6,20 @@ Refactoring from Sublime 3
 		* hints - opens message boxes with explanation what to do
 		* autosave - saves all changed md-files before generating files
 		* image_formats - which image format will be listed in quickview
-* add menu
+* add menu for (see file Main.sublime-menu)
+	* formating elements
+	* inserting elements		
+		* image
+		* link
+		* table
+
+* add/modify input GUI for:
+	* table input of count of columns and rows, format column_count|row_count
+	* link
+
+
+
+
+
 	
 	
