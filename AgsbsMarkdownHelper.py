@@ -112,7 +112,16 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			imageFormats = settings.get("image_formats")
 			global imagefiles
 			imagefiles = self.getFileName(imageFormats)
-			self.show_prompt(imagefiles,tag)
+			if imagefiles:
+				self.show_prompt(imagefiles,tag)
+			else:
+				dirname = os.path.dirname(self.view.file_name())
+				dirname = os.path.join(dirname,"bilder")
+				message = "Im Ordner Bilder sind keine Bilddaten gespeichert.\n"
+				message += "Speichern zuerst Bilder in dem Ordner\n"
+				message += dirname +"\n"
+				message += "um ein Bild einfügen zu können." 
+				sublime.error_message(message)	
 		elif tag =="a":
 			if(settings.get("hints")):
 				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
@@ -124,11 +133,10 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		elif tag == "a":
 			print("todo")
 
-	def getFileName(self, imageFormats):
+	def getFileName(self, imageFormats):		
 		listFiles = []
 		filename = self.view.file_name()
-		dir = os.path.dirname(filename)
-
+		dir = os.path.dirname(filename)		
 		for root, dirs, files in os.walk(dir):
 			for file in files:
 				extension = os.path.splitext(file)[1]
@@ -210,16 +218,21 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 			console.printMessage(self.view, message)		
 		# insert markdown
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
-
+"""
+{ "keys": ["alt+shift+h"], "command": "add_tag", "args": {"tag": "h", "markdown_str":"#"} }
+{ "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} }
+{ "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
+"""
 class AddTagCommand(sublime_plugin.TextCommand):
      def run(self, edit, tag, markdown_str):
         screenful = self.view.visible_region()
         (row,col) = self.view.rowcol(self.view.sel()[0].begin())
-        target = self.view.text_point(row, 0)
+        target = self.view.text_point(row, 0)        
         # strong and em
         if tag in ['em', 'strong']:                
                 (row,col) = self.view.rowcol(self.view.sel()[0].begin()) 
-                for region in self.view.sel():
+
+                for region in self.view.sel():                	             	
                     if not region.empty():
                         selString = self.view.substr(region)                       
                         word = self.view.word(target)                                               
@@ -239,7 +252,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
                             endPos = region.a                           
                         endPos = endPos + len(markdown_str)                        
                         self.view.insert(edit,firstPos,markdown_str)                        
-                        self.view.insert(edit,endPos,markdown_str)
+                        self.view.insert(edit,endPos,markdown_str)                                            
         #heading
         elif tag in ['h']:
               for region in self.view.sel():
@@ -249,7 +262,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
                             firstPos =  region.a
                         else:
                             firstPos =  region.b
-                        self.view.insert(edit,firstPos,markdown_str)               
+                        self.view.insert(edit,firstPos,markdown_str)                       
         elif tag in ['blockqoute', 'ul', 'ol', 'code']:
             for region in self.view.sel():
                     if not region.empty():
