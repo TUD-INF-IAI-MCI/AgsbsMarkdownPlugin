@@ -1,6 +1,6 @@
 {
 	"debug": true,
-	"hints": false,
+	"hints": true,
 	"autosave": true,
 	"image_formats": [".jpg",".png",".svg"]
 }

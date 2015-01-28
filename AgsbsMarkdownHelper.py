@@ -46,6 +46,9 @@ global Debug
 Debug = settings.get("debug")
 global console
 
+
+global messageBox
+messageBox = MessageBox()
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
 """
@@ -62,7 +65,8 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     		path = os.path.join(sublime.packages_path())
     		print(path)
     		m = Master(path)
-    		#m.run()
+    		#m.run()    	
+
 
 """
 { "keys": ["f3"], "command": "cmd" , "args": {"function": "checkMarkdown"} }
@@ -93,27 +97,31 @@ class CmdCommand(sublime_plugin.TextCommand):
     		console.printMessage(self.view,debug_message)
 """
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
+{ "keys": ["alt+shift+l"], "command": "insert_panel", "args": {"tag": "a"} }
 """
 class InsertPanelCommand(sublime_plugin.TextCommand):   
 	def run(self, edit, tag):		
 		if tag == "img":
 			# add content to dictionary
-			self.image_url =""
-			
-			if(settings.get("hints")):
-				sublime.message_dialog("Sie wollen ein Bild hinzufügen. Sie müssen 2 Eingaben tätigen: \n"
+			self.image_url =""			
+			if(settings.get("hints")):				
+				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
 					"\t1. Speicherort des Bildes \n"
 					"\t2. Alternativbeschreibung zum Bild \n")
 			imageFormats = settings.get("image_formats")
 			global imagefiles
 			imagefiles = self.getFileName(imageFormats)
 			self.show_prompt(imagefiles,tag)
+		elif tag =="a":
+			if(settings.get("hints")):
+				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+					"\t1. Linktext, z.B. Webseite der TU Dresden \n"
+					"\t2. URL, http://www.tu-dresden.de  \n")
 	def show_prompt(self, listFile,tag):
 		if tag == "img":
 			self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)
 		elif tag == "a":
 			print("todo")
-
 
 	def getFileName(self, imageFormats):
 		listFiles = []
@@ -148,6 +156,90 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			return
 
 
+class InsertTableCommand(sublime_plugin.TextCommand):
+	def run(self, edit):
+		sublime.active_window().show_input_panel("Spalten|Zeilen", "Spalten|Zeilen", self.on_done, self.on_change, self.on_cancel)
+	def on_done(self, input):
+		print("TODOTABLE")
+	def on_change(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+		if input == -1:
+			return
+	def on_cancel(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+		if input == -1:
+			return
+
+   # elif tag in ['table']:
+   #          self.view.insert(edit, target, "| Tables        | Are           | Cool  | \n" 
+   #          "| ------------- | ------------- | ----- |\n" 
+   #          "| col 3 is      | right-aligned | $1600 |\n"
+   #          "| col 2 is      | centered      |   $12 |\n"
+   #          "| zebra stripes | are neat      |    $1 |\n")
+
+class AddTagCommand(sublime_plugin.TextCommand):
+     def run(self, edit, tag, markdown_str):
+        screenful = self.view.visible_region()
+        (row,col) = self.view.rowcol(self.view.sel()[0].begin())
+        target = self.view.text_point(row, 0)
+        # strong and em
+        if tag in ['em', 'strong']:                
+                (row,col) = self.view.rowcol(self.view.sel()[0].begin()) 
+                for region in self.view.sel():
+                    if not region.empty():
+                        selString = self.view.substr(region)                       
+                        word = self.view.word(target)                                               
+                        movecursor = len(word)   
+                        diff = 0
+                        if movecursor > 0:
+                            diff = movecursor/2        
+                        strg = str(diff)
+                    
+                        target = self.view.text_point(row, diff)
+                        self.view.sel().clear() 
+                        if region.a < region.b:
+                            firstPos =  region.a
+                            endPos = region.b
+                        else:
+                            firstPos =  region.b    
+                            endPos = region.a                           
+                        endPos = endPos + len(markdown_str)                        
+                        self.view.insert(edit,firstPos,markdown_str)                        
+                        self.view.insert(edit,endPos,markdown_str)
+        #heading
+        elif tag in ['h']:
+              for region in self.view.sel():
+                    if not region.empty():
+                        firstPos = 0
+                        if region.a < region.b:
+                            firstPos =  region.a
+                        else:
+                            firstPos =  region.b
+                        self.view.insert(edit,firstPos,markdown_str)               
+        elif tag in ['blockqoute', 'ul', 'ol', 'code']:
+            for region in self.view.sel():
+                    if not region.empty():
+                        lines = self.view.split_by_newlines(region)
+                        for i,line in enumerate(lines):
+                            if tag == 'ol':
+                                number = 1 +i                                     
+                                self.view.insert(edit, line.a+3*i, str(number)+'. ')                                
+                            else:                                            
+                                self.view.insert(edit, line.a+2*i, markdown_str)
+
+        elif tag in ['hr']:
+            self.view.insert(edit, target, markdown_str +"\n")
+     
+#
+# Below this are only helpers
+#
+class MessageBox():
+	def __init__(self):
+		return
+	def showMessageBox(self,message):
+		sublime.message_dialog(message)
 
 class Console():
 	def __init__(self,view):

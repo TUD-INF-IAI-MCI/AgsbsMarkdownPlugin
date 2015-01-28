@@ -6,6 +6,6 @@ Refactoring from Sublime 3
 		* hints - opens message boxes with explanation what to do
 		* autosave - saves all changed md-files before generating files
 		* image_formats - which image format will be listed in quickview
-* added functions
+* add menu
 	
 	
