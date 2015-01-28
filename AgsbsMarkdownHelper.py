@@ -126,12 +126,13 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			if(settings.get("hints")):
 				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
 					"\t1. Linktext, z.B. Webseite der TU Dresden \n"
-					"\t2. URL, http://www.tu-dresden.de  \n")
+					"\t2. URL, http://www.tu-dresden.de  \n")					
+			self.show_prompt(None,tag)
 	def show_prompt(self, listFile,tag):
 		if tag == "img":
 			self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)
 		elif tag == "a":
-			print("todo")
+			self.view.window().show_input_panel("Linktext", "", self.one_done_linktext, self.on_change, self.on_cancel)
 
 	def getFileName(self, imageFormats):		
 		listFiles = []
@@ -144,17 +145,42 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 					listFiles.append(file)
 		return listFiles
 
+	def one_done_linktext(self,input):
+		if input == -1 or not input:			
+			sublime.error_message("Linktext darf nicht leer sein")			
+			return
+		else:			
+			self.linktext = input
+		self.view.window().show_input_panel("URL", "", self.on_done_url, self.on_change, self.on_cancel)
+
+	def on_done_url(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+		if input == -1 or not input:
+			sublime.error_message("URL darf nicht leer sein")
+			return       
+		#markdown = '[Linktext aendern](' +input +')'
+		if(not input.lower().startswith("http://") or not input.lower().startswith("https://")):
+			input = "http://"+input
+		markdown = "[%s](%s)" % (self.linktext,input.lower())
+		self.view.run_command(
+			"insert_my_text", {"args":            
+            {'text': markdown}})
+
 	def on_done_filename(self, input): 
 		if not self.image_url:
-			self.image_url = imagefiles[input]
-		
-		print("gespeichert", self.image_url) 
-		self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, None, None)                                               
+			self.image_url = imagefiles[input]			
+			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, None, None)                                               
+		else:
+			print(input)
+			sublime.error_message("error import image on_done_filename")
 
 	def on_done_img_description(self,input):
 		self.desc = input
 		print("self.image_url",self.image_url)
 		print("self.desc",self.desc)
+
+	
 
 	def on_change(self, input):
 		if input == -1:
