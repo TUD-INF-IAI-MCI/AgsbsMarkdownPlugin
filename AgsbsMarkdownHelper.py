@@ -156,7 +156,9 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		if input == -1:
 			return
 
-
+"""
+{ "keys": ["alt+shift+t"], "command": "insert_table"}
+"""
 class InsertTableCommand(sublime_plugin.TextCommand):
 	def run(self, edit):
 		sublime.active_window().show_input_panel("Spalten|Zeilen", "Spalten|Zeilen", self.on_done, self.on_change, self.on_cancel)
@@ -208,13 +210,6 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 			console.printMessage(self.view, message)		
 		# insert markdown
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
-
-   # elif tag in ['table']:
-   #          self.view.insert(edit, target, "| Tables        | Are           | Cool  | \n" 
-   #          "| ------------- | ------------- | ----- |\n" 
-   #          "| col 3 is      | right-aligned | $1600 |\n"
-   #          "| col 2 is      | centered      |   $12 |\n"
-   #          "| zebra stripes | are neat      |    $1 |\n")
 
 class AddTagCommand(sublime_plugin.TextCommand):
      def run(self, edit, tag, markdown_str):
