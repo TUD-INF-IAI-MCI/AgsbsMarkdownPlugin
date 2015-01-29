@@ -167,16 +167,17 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			"insert_my_text", {"args":            
             {'text': markdown}})
 
-	def on_done_filename(self, input): 
-		if not self.image_url:
-			self.image_url = imagefiles[input]			
+	def on_done_filename(self, input): 				
+		if input == -1 and not self.image_url:  # esc
+			sublime.error_message("Wählen Sie eine Bilddatei aus!")			
+		elif input != -1 :
+			self.image_url = imagefiles[input]					
 			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, None, None)                                               
-		else:
-			print(input)
-			sublime.error_message("error import image on_done_filename")
+
 
 	def on_done_img_description(self,input):
 		self.desc = input
+		sublime.error_message("TODO")
 		print("self.image_url",self.image_url)
 		print("self.desc",self.desc)
 
