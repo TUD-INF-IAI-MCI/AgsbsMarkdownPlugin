@@ -172,16 +172,60 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			sublime.error_message("Wählen Sie eine Bilddatei aus!")			
 		elif input != -1 :
 			self.image_url = imagefiles[input]					
-			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, None, None)                                               
+			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfügen", self.on_done_img_description, None, None)                                               
 
 
-	def on_done_img_description(self,input):
-		self.desc = input
-		sublime.error_message("TODO")
-		print("self.image_url",self.image_url)
-		print("self.desc",self.desc)
-
+	def on_done_img_description(self,description):
+		self.desc = description
+		default_desc = "Bildbeschreibung hier einfügen"
+		print(description)		
+		if description == -1:
+			sublime.error_message("Fehler in on_done_img_description")
+		elif description == default_desc:			
+			sublime.error_message("Sie haben die Standardbildbeschreibung nicht geändert!")			
+		else: 
+			if(len(description)>=80):
+				self.description_extern(description)
+			else:
+				text = '!['+description+'](bilder/' +self.image_url +')'
+				#self.image_url + " " +description
+				if(Debug):
+					message = "image short \n" +text
+					console.printMessage(self.view,message)
+				self.view.run_command("insert_my_text", {"args":{'text': text}})
 	
+	def description_extern(self,description):
+		"""
+            link to the alternativ description
+        """
+		link = "Bildbeschreibung von " +self.image_url
+		heading_description = '\n\n## '+link
+		link = link.lower().replace(" ","-")            
+		markdown ='[![Beschreibung ausgelagert](bilder/' +self.image_url +')](bilder.html' +'#' +link +')'               
+		self.view.run_command(
+            "insert_my_text", {"args":            
+            {'text': markdown}})
+		path = self.view.file_name()
+		base = os.path.split(path)[0]
+		"""
+            try to load bilder.md file or create
+        """
+        #fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
+        #print fd.readlines()
+        #count =  fd.read
+		fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
+		os.close(fd)
+		heading_level_one = '# Bilderbeschreibungen \n \n'
+		heading_level_one = heading_level_one.encode('utf-8').strip()
+		with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf8") as fd:
+			line_count = len(fd.readlines())
+			if line_count <=0:
+				fd.write(heading_level_one)
+		with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf8") as fd:            
+			fd.write(heading_description)		
+			fd.write("\n\n"+description) 
+        
+		#sublime.error_message("ToDo")
 
 	def on_change(self, input):
 		if input == -1:
