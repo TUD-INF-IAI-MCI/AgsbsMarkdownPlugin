@@ -172,16 +172,31 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			sublime.error_message("Wählen Sie eine Bilddatei aus!")			
 		elif input != -1 :
 			self.image_url = imagefiles[input]					
-			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfuegen", self.on_done_img_description, None, None)                                               
+			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfügen", self.on_done_img_description, None, None)                                               
 
 
-	def on_done_img_description(self,input):
-		self.desc = input
-		sublime.error_message("TODO")
-		print("self.image_url",self.image_url)
-		print("self.desc",self.desc)
-
+	def on_done_img_description(self,description):
+		self.desc = description
+		default_desc = "Bildbeschreibung hier einfügen"
+		print(description)		
+		if description == -1:
+			sublime.error_message("Fehler in on_done_img_description")
+		elif description == default_desc:			
+			sublime.error_message("Sie haben die Standardbildbeschreibung nicht geändert!")			
+		else: 
+			if(len(description)>=80):
+				self.description_extern(description)
+			else:
+				text = '!['+description+'](bilder/' +self.image_url +')'
+				#self.image_url + " " +description
+				if(Debug):
+					message = "image short \n" +text
+					console.printMessage(self.view,message)
+				self.view.run_command("insert_my_text", {"args":{'text': text}})
 	
+	def description_extern(self,description):
+		
+		#sublime.error_message("ToDo")
 
 	def on_change(self, input):
 		if input == -1:
