@@ -1,0 +1,7 @@
+# ToDo
+
+Problem, wenn ich mit eine config.confFactory() hole
+und diese dann mit inst.write() schreibe legt er die Datei zwar nicht da so ich will sondern Ordner Packages.
+- Meine Lösung wechlse mit chdir in das verzeichnis
+
+- pandocfilters in lib/ verschieben?
