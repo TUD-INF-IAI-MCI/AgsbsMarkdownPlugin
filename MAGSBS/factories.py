@@ -4,11 +4,9 @@
 # (c) 2014 Sebastian Humenda <shumenda@gmx.de>
 
 import os, sys
-#import MAGSBS.datastructures as datastructures
-from . import datastructures as datastructures
-from . import filesystem as filesystem
-from . import config as config
-
+from . import datastructures
+from . import filesystem
+from . import config
 from .errors import TOCError, MissingMandatoryField
 _ = config._
 

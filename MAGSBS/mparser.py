@@ -4,9 +4,9 @@
 # (c) 2014 Sebastian Humenda <shumenda@gmx.de>
 
 import re, os
-from . import datastructures as datastructures
+from . import datastructures
 from .errors import StructuralError
-from  . import contentfilter as contentfilter
+from . import contentfilter as contentfilter
 
 class simpleMarkdownParser():
     """Implement an own simple markdown parser. Just reads in the headings of

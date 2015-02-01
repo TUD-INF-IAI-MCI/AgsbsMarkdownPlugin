@@ -5,10 +5,10 @@ template for additional meta data in the output document(s)."""
 
 import datetime, codecs, tempfile
 import os, sys, subprocess
-from . import config as config
-from . import mparser as mparser
-from . import contentfilter as contentfilter
-from .errors import SubprocessError, WrongFileNameError
+from . import config
+from . import mparser
+from . import contentfilter
+from .errors import SubprocessError, WrongFileNameError, FileNotFoundError
 from .config import PYVERSION
 
 HTML_template = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
