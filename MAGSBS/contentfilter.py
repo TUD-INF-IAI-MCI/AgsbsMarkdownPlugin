@@ -1,4 +1,4 @@
-from ..lib.pandocfilters import * 
+from ..lib.pandocfilters import *
 import sys, subprocess, re
 #from . import *
 from .pandoc import *
