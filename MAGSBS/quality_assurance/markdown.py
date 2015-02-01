@@ -3,7 +3,7 @@
 
 from .meta import Mistake, MistakeType, MistakePriority, onelinerMistake
 import os, re, collections
-import MAGSBS.config as config
+from .. import config as config
 
 class page_number_is_paragraph(Mistake):
     """Check whether all page numbers are on a paragraph on their own."""

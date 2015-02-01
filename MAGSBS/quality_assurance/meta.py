@@ -2,9 +2,9 @@
 mistake."""
 
 import re
-import enum
+from ...lib import enum
 import textwrap
-from MAGSBS.datastructures import is_list_alike
+from ..datastructures import is_list_alike
 
 def HeadingExtractor(text):
     headings = []

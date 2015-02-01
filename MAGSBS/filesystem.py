@@ -2,7 +2,7 @@
 
 import os, collections
 
-from . import mparser
+from .mparser import *
 from . import config
 from . import errors
 _ = config._

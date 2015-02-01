@@ -1,7 +1,7 @@
-from pandocfilters import *
-import pandocfilters
+from ..lib.pandocfilters import * 
 import sys, subprocess, re
-import MAGSBS
+#from . import *
+from .pandoc import *
 
 
 def html(x):

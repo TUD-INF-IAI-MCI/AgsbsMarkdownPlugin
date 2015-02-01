@@ -28,7 +28,7 @@ files are converted."""
         go_deeper = True
         for dir in dirs:
             meta = [e for e in os.listdir(dir) if e ==
-                    MAGSBS.config.CONF_FILE_NAME]
+                    config.CONF_FILE_NAME]
             if( meta ): # found, this is our root
                 roots.append( dir )
                 go_deeper = False

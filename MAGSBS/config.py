@@ -6,7 +6,7 @@ import getpass, os, sys
 import datetime, codecs
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-from MAGSBS.errors import *
+from .errors import *
 
 if not (sys.platform.lower().startswith("win")):
     import pwd
