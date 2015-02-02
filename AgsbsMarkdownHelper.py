@@ -5,23 +5,23 @@ import os
 import re
 import codecs, re, sys
 import collections
+import webbrowser 
 
 VERSION = int(sublime.version())
 
 reloader = "reloader"
 
 if VERSION > 3000:
-	print("sublime version is higher >= 3")
-	#from .MAGSBS-infrastructure.MAGSBS import reloader	
-	#from .MAGSBS.master import *
-	from .agsbs_infrastructure.MAGSBS.master import *
-	from .agsbs_infrastructure.MAGSBS.config import *
-	from .agsbs_infrastructure.MAGSBS.errors import *
-	from .agsbs_infrastructure.MAGSBS.filesystem import *
-	from .agsbs_infrastructure.MAGSBS.mparser import *
-	from .agsbs_infrastructure.MAGSBS.errors import *
-	from .agsbs_infrastructure.MAGSBS.pandocfilters import *
-	from .agsbs_infrastructure.MAGSBS.pandoc import *
+	print("sublime version is higher >= 3")	
+	from .agsbs_infrastructure.MAGSBS import master
+	from .agsbs_infrastructure.MAGSBS import config as config
+	#from .agsbs_infrastructure.MAGSBS import .errors
+	#from .agsbs_infrastructure.MAGSBS.filesystem import *
+	#from .agsbs_infrastructure.MAGSBS.mparser import *
+	#from .agsbs_infrastructure.MAGSBS.errors import *
+	#from .agsbs_infrastructure.MAGSBS.pandocfilters import *
+	from .agsbs_infrastructure.MAGSBS import pandoc
+	from .agsbs_infrastructure.MAGSBS import filesystem
 	#from .MAGSBS.config import *
 	#from  .MAGSBS.quality_assurance import *
 	#from .MAGSBS.matuc import *
@@ -40,39 +40,75 @@ if reloader in sys.modules:
 
 ### Start plugin
 
-
 settings = sublime.load_settings("Agsbshelper.sublime-settings")
 global Debug
-Debug = settings.get("debug")
+Debug = settings.get("debug")	
+global autoload_html
+autoload_html = settings.get("autoload_html")
+global messageBox
+messageBox = MessageBox()
 global console
 console = Console(None)
 
 
-global messageBox
-messageBox = MessageBox()
+
+
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
 """
 class CreateStructureCommand(sublime_plugin.TextCommand):
     def run(self,edit):
     	#raise NotImplementedError("CreateStructureCommand")
-    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	#path = os.path.dirname(sublime.active_window().folders()[0])
+    	path = sublime.active_window().folders()[0]
+    	os.chdir(path)
+    	builder = filesystem.init_lecture("test",5,lang="de")
+    	builder.set_has_preface(False)
+    	builder.generate_structure()
     	if(Debug):
     		console = Console(self.view)
-    		console.printMessage(self.view,path)    		
-    		for key in sys.modules.keys():
-    			if key.startswith("AgsbsMarkdownPlugin"):
-    				print(key)
-    		path = os.path.join(sublime.packages_path())
-    		print(path)
-    		m = Master(path)
-    		#m.run()    	
+    		console.printMessage(self.view,path)
+    		sublime.error_message("TODO form")
 
+"""
+{ "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
+"""
+
+class CreateHtmlFileCommand(sublime_plugin.TextCommand):
+    def run(self,edit):
+        file_name = self.view.window().active_view().file_name()
+        path = os.path.dirname(self.view.window().active_view().file_name())
+        #file_name = file_name.encode('ascii', 'strict')
+        #file_name = file_name.replace("\\","\\\\")
+        file_name = str(file_name)
+        print(file_name)
+        os.chdir(path)
+        p = pandoc.pandoc()
+        p.convert(file_name)
+        if(autoload_html):        	
+        	Browser(file_name.replace(".md",".html"))
+
+"""
+{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
+"""
+class CreateAllCommand(sublime_plugin.TextCommand):
+    def run(self,edit):
+        path = os.path.dirname(self.view.window().active_view().file_name())
+        print("#####################")
+        parent = os.path.abspath(os.path.join(path, os.pardir))
+        print(path)
+        os.chdir(path)
+        p = pandoc.pandoc()
+        m = master.Master(parent)
+        m.run()
+        if(autoload_html):        	
+        	parent = os.path.join(parent,"inhalt.html")
+        	print(parent)
+        	Browser(parent)
 
 """
 { "keys": ["f3"], "command": "cmd" , "args": {"function": "checkMarkdown"} }
-{ "keys": ["f5"], "command": "cmd", "args": {"function": "createHTML"} }
-{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
+
 { "keys": ["f7"], "command": "cmd", "args": {"function": "showHTML"} }
 """
 class CmdCommand(sublime_plugin.TextCommand):
@@ -350,6 +386,14 @@ class AddTagCommand(sublime_plugin.TextCommand):
 #
 # Below this are only helpers
 #
+
+class Browser():
+	def __init__(self,filename):
+		url = "file://"+filename
+		print("###########")
+		print(url)
+		webbrowser.open(url,new = 2)
+
 
 class InsertMyText(sublime_plugin.TextCommand):
 	def run(self, edit, args):

@@ -15,7 +15,8 @@
     { "keys": ["f2"], "command": "create_structure"},
     { "keys": ["f3"], "command": "create_lecture"},
     { "keys": ["f5"], "command": "create_html_file"},
-    { "keys": ["f5"], "command": "create_all"}
+    { "keys": ["f6"], "command": "create_all"}
+
 ]
 
 
