@@ -224,8 +224,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf8") as fd:            
 			fd.write(heading_description)		
 			fd.write("\n\n"+description) 
-        
-		#sublime.error_message("ToDo")
+
 
 	def on_change(self, input):
 		if input == -1:
