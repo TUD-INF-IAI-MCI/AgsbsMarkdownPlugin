@@ -15,15 +15,17 @@ if VERSION > 3000:
 	print("sublime version is higher >= 3")	
 	from .agsbs_infrastructure.MAGSBS import master
 	from .agsbs_infrastructure.MAGSBS import config as config
+	from .agsbs_infrastructure.MAGSBS.quality_assurance import mistkerl as mistkerl
+	from .agsbs_infrastructure.MAGSBS import pandoc
+	from .agsbs_infrastructure.MAGSBS import filesystem
 	#from .agsbs_infrastructure.MAGSBS import .errors
 	#from .agsbs_infrastructure.MAGSBS.filesystem import *
 	#from .agsbs_infrastructure.MAGSBS.mparser import *
 	#from .agsbs_infrastructure.MAGSBS.errors import *
 	#from .agsbs_infrastructure.MAGSBS.pandocfilters import *
-	from .agsbs_infrastructure.MAGSBS import pandoc
-	from .agsbs_infrastructure.MAGSBS import filesystem
+	
 	#from .MAGSBS.config import *
-	#from  .MAGSBS.quality_assurance import *
+	
 	#from .MAGSBS.matuc import *
 	#from .MAGSBS.lib.enum import *
 	
@@ -97,9 +99,9 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     	builder.generate_structure()
     	if(Debug):
     		console = Console(self.view)
-    		console.printMessage(self.view,path)
-    		print(inputs)	
-    def on_cancel(self,input):
+    		console.printMessage(self.view,path)    		
+    def on_cancel(self, input):
+    	print(input)
     	if input == -1:
     		return
 
@@ -140,31 +142,17 @@ class CreateAllCommand(sublime_plugin.TextCommand):
         	Browser(parent)
 
 """
-{ "keys": ["f3"], "command": "cmd" , "args": {"function": "checkMarkdown"} }
-
-{ "keys": ["f7"], "command": "cmd", "args": {"function": "showHTML"} }
+{ "keys": ["f3"], "command": "cmd" , "args": {"function": "checkAll"} }
 """
-class CmdCommand(sublime_plugin.TextCommand):
-    def run(self, edit,function): 
-    	view = self.view
-    	debug_message = ""
-    	if function == "checkMarkdown":
-    		debug_message = "todo " + function
-    	elif function == "createHTML":
-    		#create html from open md.file
-    		p = pandoc()
-    		md_file = self.view.window().active_view().file_name()
+class CheckAllCommand(sublime_plugin.TextCommand):
+    def run(self, edit):         	
+    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	mk = mistkerl.MistKerl()
+    	errors = mk.run(path)
+    	if(Debug):    		
+    		print(errors)
+    		console.printMessage(self.view,"check with MK")
 
-    		debug_message = "md_file " +md_file 		
-    		print()
-    	elif function == "createAll":
-    		debug_message = "todo " + function
-    	elif function == "showHTML":
-    		debug_message = "todo " + function
-    	
-    	if(Debug):
-    		console = Console(self.view)
-    		console.printMessage(self.view,debug_message)
 """
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
 { "keys": ["alt+shift+l"], "command": "insert_panel", "args": {"tag": "a"} }
