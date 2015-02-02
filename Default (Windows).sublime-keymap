@@ -13,10 +13,9 @@
     { "keys": ["alt+shift+p"], "command": "insert_panel", "args": {"tag": "page"} },    
     { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
     { "keys": ["f2"], "command": "create_structure"},
-    { "keys": ["f3"], "command": "create_lecture"},
+    { "keys": ["f3"], "command": "check_all"},
     { "keys": ["f5"], "command": "create_html_file"},
     { "keys": ["f6"], "command": "create_all"}
-
 ]
 
 
