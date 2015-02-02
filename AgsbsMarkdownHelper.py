@@ -38,7 +38,37 @@ if reloader in sys.modules:
 
 
 
-### Start plugin
+#
+# Below this are only helpers
+#
+
+class Browser():
+	def __init__(self,filename):
+		url = "file://"+filename	
+		webbrowser.open(url,new = 2)
+
+
+class InsertMyText(sublime_plugin.TextCommand):
+	def run(self, edit, args):
+		self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+
+class MessageBox():
+	def __init__(self):
+		return
+	def showMessageBox(self,message):
+		sublime.message_dialog(message)
+
+class Console():
+	def __init__(self,view):
+		return
+
+	def printMessage(self,view, message):
+		view.window().run_command("show_panel",{"panel": "console"});
+		print("########BEGIN DEBUG-OUTPUT#########\n")
+		print(message)
+		print("\n########END DEBUG-OUTPUT#########")  
+
+
 
 settings = sublime.load_settings("Agsbshelper.sublime-settings")
 global Debug
@@ -51,24 +81,27 @@ global console
 console = Console(None)
 
 
-
-
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
 """
 class CreateStructureCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-    	#raise NotImplementedError("CreateStructureCommand")
-    	#path = os.path.dirname(sublime.active_window().folders()[0])
+    	self.view.window().show_input_panel("Struktur anlegen", "title|kapitel|sprache|vorwort", self.one_done, None, self.on_cancel)	
+    def one_done(self, input):
+    	inputs = input.split("|")    	    
     	path = sublime.active_window().folders()[0]
     	os.chdir(path)
-    	builder = filesystem.init_lecture("test",5,lang="de")
-    	builder.set_has_preface(False)
+    	preface = bool(inputs[3])
+    	builder = filesystem.init_lecture(inputs[0],int(inputs[1]),lang=inputs[2])
+    	builder.set_has_preface(preface)
     	builder.generate_structure()
     	if(Debug):
     		console = Console(self.view)
     		console.printMessage(self.view,path)
-    		sublime.error_message("TODO form")
+    		print(inputs)	
+    def on_cancel(self,input):
+    	if input == -1:
+    		return
 
 """
 { "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
@@ -383,37 +416,6 @@ class AddTagCommand(sublime_plugin.TextCommand):
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
      
-#
-# Below this are only helpers
-#
-
-class Browser():
-	def __init__(self,filename):
-		url = "file://"+filename
-		print("###########")
-		print(url)
-		webbrowser.open(url,new = 2)
-
-
-class InsertMyText(sublime_plugin.TextCommand):
-	def run(self, edit, args):
-		self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
-
-class MessageBox():
-	def __init__(self):
-		return
-	def showMessageBox(self,message):
-		sublime.message_dialog(message)
-
-class Console():
-	def __init__(self,view):
-		return
-
-	def printMessage(self,view, message):
-		view.window().run_command("show_panel",{"panel": "console"});
-		print("########BEGIN DEBUG-OUTPUT#########\n")
-		print(message)
-		print("\n########END DEBUG-OUTPUT#########")  
 
 
 
