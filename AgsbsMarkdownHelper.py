@@ -18,6 +18,7 @@ if VERSION > 3000:
 	from .agsbs_infrastructure.MAGSBS.quality_assurance import mistkerl as mistkerl
 	from .agsbs_infrastructure.MAGSBS import pandoc
 	from .agsbs_infrastructure.MAGSBS import filesystem
+	from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
 	#from .agsbs_infrastructure.MAGSBS import .errors
 	#from .agsbs_infrastructure.MAGSBS.filesystem import *
 	#from .agsbs_infrastructure.MAGSBS.mparser import *
@@ -60,15 +61,15 @@ class MessageBox():
 	def showMessageBox(self,message):
 		sublime.message_dialog(message)
 
-class Console():
+class Console():	
 	def __init__(self,view):
 		return
 
-	def printMessage(self,view, message):
+	def printMessage(self,view, category,  message):		
 		view.window().run_command("show_panel",{"panel": "console"});
-		print("########BEGIN DEBUG-OUTPUT#########\n")
+		print("######## Begin",category," #########\n")
 		print(message)
-		print("\n########END DEBUG-OUTPUT#########")  
+		print("\n######## END ",category," #########")  
 
 
 
@@ -99,7 +100,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     	builder.generate_structure()
     	if(Debug):
     		console = Console(self.view)
-    		console.printMessage(self.view,path)    		
+    		console.printMessage(self.view,'Debug',path)    		
     def on_cancel(self, input):
     	print(input)
     	if input == -1:
@@ -147,11 +148,19 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 class CheckAllCommand(sublime_plugin.TextCommand):
     def run(self, edit):         	
     	path = os.path.dirname(self.view.window().active_view().file_name())
-    	mk = mistkerl.MistKerl()
+    	mk = mistkerl.Mistkerl()
     	errors = mk.run(path)
-    	if(Debug):    		
-    		print(errors)
-    		console.printMessage(self.view,"check with MK")
+
+    	if(len(errors) ==0):    		
+    		console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
+    	else:
+    		console.printMessage(self.view,'Error',"FEHLR im System")
+    		formatter = meta.error_formatter()
+    		formatter.set_itemize_sign("  ")
+    		
+    		print(formatter.format_errors(errors))
+    	if(Debug):    		    		    		
+    		console.printMessage(self.view,'Debug',"check with MK")
 
 """
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
@@ -248,7 +257,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 				#self.image_url + " " +description
 				if(Debug):
 					message = "image short \n" +text
-					console.printMessage(self.view,message)
+					console.printMessage(self.view, "Debug",message)
 				self.view.run_command("insert_my_text", {"args":{'text': text}})
 	
 	def description_extern(self,description):
@@ -342,7 +351,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 		if(Debug):
 			message = "Table with \n\t %d columns\n\t %d rows \n" % (cols, rows)
 			message += "Generated markdown is \n" +markdown
-			console.printMessage(self.view, message)		
+			console.printMessage(self.view, "Debug", message)		
 		# insert markdown
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 """
