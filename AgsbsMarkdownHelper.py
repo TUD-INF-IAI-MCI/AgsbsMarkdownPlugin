@@ -18,6 +18,8 @@ if VERSION > 3000:
 	from .agsbs_infrastructure.MAGSBS.quality_assurance import mistkerl as mistkerl
 	from .agsbs_infrastructure.MAGSBS import pandoc
 	from .agsbs_infrastructure.MAGSBS import filesystem
+	from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
+	from .agsbs_infrastructure.MAGSBS import factories
 	#from .agsbs_infrastructure.MAGSBS import .errors
 	#from .agsbs_infrastructure.MAGSBS.filesystem import *
 	#from .agsbs_infrastructure.MAGSBS.mparser import *
@@ -60,18 +62,34 @@ class MessageBox():
 	def showMessageBox(self,message):
 		sublime.message_dialog(message)
 
-class Console():
+class Console():	
 	def __init__(self,view):
 		return
 
-	def printMessage(self,view, message):
+	def printMessage(self,view, category,  message):		
 		view.window().run_command("show_panel",{"panel": "console"});
-		print("########BEGIN DEBUG-OUTPUT#########\n")
+		print("######## Begin",category," #########\n")
 		print(message)
-		print("\n########END DEBUG-OUTPUT#########")  
+		print("\n######## END ",category," #########")  
 
-
-
+class Saver():
+	def __init__(self):
+		return
+	def saveAllDirty(self):			
+		for w in sublime.windows():
+			for v in w.views():
+				if not v.file_name():
+					dirty_unname = True
+					# maybe toDo 					
+				elif v.file_name().endswith(".md"):
+					if v.is_dirty():						
+						if settings.get("autosave"):
+							v.run_command("save")
+						else:			
+							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
+												   "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
+							return
+						
 settings = sublime.load_settings("Agsbshelper.sublime-settings")
 global Debug
 Debug = settings.get("debug")	
@@ -81,7 +99,8 @@ global messageBox
 messageBox = MessageBox()
 global console
 console = Console(None)
-
+global saver
+saver = Saver()
 
 """
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
@@ -99,28 +118,55 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     	builder.generate_structure()
     	if(Debug):
     		console = Console(self.view)
-    		console.printMessage(self.view,path)    		
+    		console.printMessage(self.view,'Debug',path)    		
     def on_cancel(self, input):
     	print(input)
     	if input == -1:
     		return
 
 """
+{ "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} }
+{ "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
+"""
+class CheckWithMkCommand(sublime_plugin.TextCommand):
+    def run(self, edit, function):      
+       	path = os.path.dirname(self.view.window().active_view().file_name())
+       	parent = os.path.abspath(os.path.join(path, os.pardir))   
+       	mk = mistkerl.Mistkerl()
+       	message = ""
+       	errors = ""
+       	if function =="checkFile":
+       		errors = mk.run(path)
+       	elif function =="checkAll":
+       		errors = mk.run(parent)
+       	if(len(errors) ==0):
+       		console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
+       	else:
+       		formatter = meta.error_formatter()
+       		formatter.set_itemize_sign("  ")
+       		console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
+       		
+       	if(Debug):
+       		if function == "checkFile":
+       			message = "check file " + self.view.window().active_view().file_name() +" with MK"
+       		elif function == "checkAll":
+       			message = "check path " + parent +" with MK"
+       		console.printMessage(self.view,'Debug', message)
+"""
 { "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
 """
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-        file_name = self.view.window().active_view().file_name()
-        path = os.path.dirname(self.view.window().active_view().file_name())
-        #file_name = file_name.encode('ascii', 'strict')
-        #file_name = file_name.replace("\\","\\\\")
-        file_name = str(file_name)
-        print(file_name)
-        os.chdir(path)
-        p = pandoc.pandoc()
-        p.convert(file_name)
-        if(autoload_html):        	
+    	saver.saveAllDirty()
+    	file_name = self.view.window().active_view().file_name()
+    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	file_name = str(file_name)
+    	print(file_name)
+    	os.chdir(path)
+    	p = pandoc.pandoc()
+    	p.convert(file_name)
+    	if(autoload_html):        	
         	Browser(file_name.replace(".md",".html"))
 
 """
@@ -128,30 +174,18 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 """
 class CreateAllCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-        path = os.path.dirname(self.view.window().active_view().file_name())
-        print("#####################")
-        parent = os.path.abspath(os.path.join(path, os.pardir))
-        print(path)
-        os.chdir(path)
-        p = pandoc.pandoc()
-        m = master.Master(parent)
-        m.run()
-        if(autoload_html):        	
-        	parent = os.path.join(parent,"inhalt.html")
-        	print(parent)
+    	saver.saveAllDirty()
+    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	parent = os.path.abspath(os.path.join(path, os.pardir))        
+    	os.chdir(path)
+    	p = pandoc.pandoc()
+    	m = master.Master(parent)
+    	m.run()
+    	if(autoload_html):
+        	parent = os.path.join(parent,"inhalt.html")        	
         	Browser(parent)
 
-"""
-{ "keys": ["f3"], "command": "cmd" , "args": {"function": "checkAll"} }
-"""
-class CheckAllCommand(sublime_plugin.TextCommand):
-    def run(self, edit):         	
-    	path = os.path.dirname(self.view.window().active_view().file_name())
-    	mk = mistkerl.MistKerl()
-    	errors = mk.run(path)
-    	if(Debug):    		
-    		print(errors)
-    		console.printMessage(self.view,"check with MK")
+
 
 """
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
@@ -192,14 +226,14 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			self.view.window().show_input_panel("Linktext", "", self.one_done_linktext, self.on_change, self.on_cancel)
 
 	def getFileName(self, imageFormats):		
-		listFiles = []
-		filename = self.view.file_name()
-		dir = os.path.dirname(filename)		
-		for root, dirs, files in os.walk(dir):
-			for file in files:
-				extension = os.path.splitext(file)[1]
+		listFiles = []		
+		filename = self.view.file_name()		
+		dir = os.path.dirname(filename)					
+		for (dirname,dirs, files) in os.walk(dir):					
+			for file in files:				
 				if file.endswith(tuple(imageFormats)):
-					listFiles.append(file)
+					parentname = os.path.basename(os.path.normpath(dirname))
+					listFiles.append(parentname +"/" + file)
 		return listFiles
 
 	def one_done_linktext(self,input):
@@ -233,25 +267,28 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 
 
 	def on_done_img_description(self,description):
-		self.desc = description
-		default_desc = "Bildbeschreibung hier einfügen"
-		print(description)		
-		if description == -1:
-			sublime.error_message("Fehler in on_done_img_description")
-		elif description == default_desc:			
-			sublime.error_message("Sie haben die Standardbildbeschreibung nicht geändert!")			
-		else: 
-			if(len(description)>=80):
-				self.description_extern(description)
-			else:
-				text = '!['+description+'](bilder/' +self.image_url +')'
-				#self.image_url + " " +description
-				if(Debug):
-					message = "image short \n" +text
-					console.printMessage(self.view,message)
-				self.view.run_command("insert_my_text", {"args":{'text': text}})
-	
-	def description_extern(self,description):
+		message = ""
+		img_desc = factories.image_description(self.image_url)
+		img_desc.set_description(description)
+		img_desc.set_title("title_default")				
+		img_output = img_desc.get_output();
+
+		self.writeMd(img_output[0])
+		if(len(img_output)==1):			
+			message = "intern description"
+		else:						
+			message = "extern description"
+		if(Debug):			
+			console.printMessage(self.view, "Debug image", message)
+
+	def writeMd(self,markdown_str):
+		self.view.run_command("insert_my_text", {"args":{'text': markdown_str}})
+
+	def description_extern(self,markdown_str):		
+		path = self.view.file_name()
+		base = os.path.split(path)[0]
+
+	def description_extern_1(self,description):
 		"""
             link to the alternativ description
         """
@@ -342,7 +379,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 		if(Debug):
 			message = "Table with \n\t %d columns\n\t %d rows \n" % (cols, rows)
 			message += "Generated markdown is \n" +markdown
-			console.printMessage(self.view, message)		
+			console.printMessage(self.view, "Debug", message)		
 		# insert markdown
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 """
