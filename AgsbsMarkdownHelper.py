@@ -41,6 +41,10 @@ if reloader in sys.modules:
     reload(sys.modules[reloader])
 
 
+# String as constant
+# "Öffnen Sie eine Markdown-Datei um die Convertierung zu starten"
+#
+
 
 #
 # Below this are only helpers
@@ -129,29 +133,32 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
 """
 class CheckWithMkCommand(sublime_plugin.TextCommand):
-    def run(self, edit, function):      
-       	path = os.path.dirname(self.view.window().active_view().file_name())
-       	parent = os.path.abspath(os.path.join(path, os.pardir))   
-       	mk = mistkerl.Mistkerl()
-       	message = ""
-       	errors = ""
-       	if function =="checkFile":
-       		errors = mk.run(path)
-       	elif function =="checkAll":
-       		errors = mk.run(parent)
-       	if(len(errors) ==0):
-       		console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
-       	else:
-       		formatter = meta.error_formatter()
-       		formatter.set_itemize_sign("  ")
-       		console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
-       		
-       	if(Debug):
-       		if function == "checkFile":
-       			message = "check file " + self.view.window().active_view().file_name() +" with MK"
-       		elif function == "checkAll":
-       			message = "check path " + parent +" with MK"
-       		console.printMessage(self.view,'Debug', message)
+    def run(self, edit, function): 
+    	try:
+    		path = os.path.dirname(self.view.window().active_view().file_name())
+    	except:
+    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+    		return
+    	parent = os.path.abspath(os.path.join(path, os.pardir))   
+    	mk = mistkerl.Mistkerl()
+    	message = ""
+    	errors = ""
+    	if function =="checkFile":
+    		errors = mk.run(path)
+    	elif function =="checkAll":
+    		errors = mk.run(parent)
+    	if(len(errors) ==0):
+    		console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
+    	else:
+    		formatter = meta.error_formatter()
+    		formatter.set_itemize_sign("  ")
+    		console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
+    	if(Debug):
+    		if function == "checkFile":
+    			message = "check file " + self.view.window().active_view().file_name() +" with MK"
+    		elif function == "checkAll":
+    			message = "check path " + parent +" with MK"
+    		console.printMessage(self.view,'Debug', message)
 """
 { "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
 """
@@ -159,8 +166,12 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
     def run(self,edit):
     	saver.saveAllDirty()
-    	file_name = self.view.window().active_view().file_name()
-    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	try:
+    		file_name = self.view.window().active_view().file_name()
+    		path = os.path.dirname(self.view.window().active_view().file_name())
+    	except:
+    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
+    		return    		    	
     	file_name = str(file_name)
     	print(file_name)
     	os.chdir(path)
@@ -175,7 +186,11 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 class CreateAllCommand(sublime_plugin.TextCommand):
     def run(self,edit):
     	saver.saveAllDirty()
-    	path = os.path.dirname(self.view.window().active_view().file_name())
+    	try:
+    		path = os.path.dirname(self.view.window().active_view().file_name())
+    	except:
+    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+    		return
     	parent = os.path.abspath(os.path.join(path, os.pardir))        
     	os.chdir(path)
     	p = pandoc.pandoc()
