@@ -32,18 +32,13 @@ if VERSION > 3000:
 	#from .MAGSBS.lib.enum import *
 	
 else: 
-	print("sublime version  < 3")
-	from MAGSBS import reloader
-	from MAGSBS.master import *
+	sublime.error_message("sublime version  < 3; not supported")
+	
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
     reload(sys.modules[reloader])
 
-
-# String as constant
-# "Öffnen Sie eine Markdown-Datei um die Convertierung zu starten"
-#
 
 
 #
@@ -67,18 +62,13 @@ class MessageBox():
 		sublime.message_dialog(message)
 
 class Console():	
-	def __init__(self,view):
-		return
-
 	def printMessage(self,view, category,  message):		
-		view.window().run_command("show_panel",{"panel": "console"});
+		view.window().run_command("show_panel",{"panel": "console"})
 		print("######## Begin",category," #########\n")
 		print(message)
 		print("\n######## END ",category," #########")  
 
-class Saver():
-	def __init__(self):
-		return
+class Saver(): # ToDo: function
 	def saveAllDirty(self):			
 		for w in sublime.windows():
 			for v in w.views():
@@ -102,41 +92,46 @@ autoload_html = settings.get("autoload_html")
 global messageBox
 messageBox = MessageBox()
 global console
-console = Console(None)
+console = Console()
 global saver
 saver = Saver()
 
-"""
-{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
-"""
 class CreateStructureCommand(sublime_plugin.TextCommand):
-    def run(self,edit):
-    	self.view.window().show_input_panel("Struktur anlegen", "title|kapitel|sprache|vorwort", self.one_done, None, self.on_cancel)	
-    def one_done(self, input):
-    	inputs = input.split("|")    	    
-    	path = sublime.active_window().folders()[0]
-    	os.chdir(path)
-    	preface = bool(inputs[3])
-    	builder = filesystem.init_lecture(inputs[0],int(inputs[1]),lang=inputs[2])
-    	builder.set_has_preface(preface)
-    	builder.generate_structure()
-    	if(Debug):
-    		console = Console(self.view)
-    		console.printMessage(self.view,'Debug',path)    		
+	"""
+{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
+	"""
+	def run(self,edit):
+		self.view.window().show_input_panel("Struktur anlegen",
+				"title|kapitel|sprache|vorwort", self.one_done, None,
+				self.on_cancel)
+
+	def one_done(self, input):
+		inputs = input.split("|")    	    
+		path = sublime.active_window().folders()[0]
+		os.chdir(path)
+		preface = bool(inputs[3])
+		builder = filesystem.init_lecture(inputs[0], int(inputs[1]),
+				lang=inputs[2])
+		builder.set_has_preface(preface)
+		builder.generate_structure()
+		if(Debug):
+			console = Console()
+			console.printMessage(self.view,'Debug',path)			
+
     def on_cancel(self, input):
     	print(input)
     	if input == -1:
     		return
 
-"""
+class CheckWithMkCommand(sublime_plugin.TextCommand):
+	"""
 { "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} }
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
-"""
-class CheckWithMkCommand(sublime_plugin.TextCommand):
+	"""
     def run(self, edit, function): 
     	try:
     		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except:
+    	except OsError:
     		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
     		return
     	parent = os.path.abspath(os.path.join(path, os.pardir))   
@@ -159,21 +154,20 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
     		elif function == "checkAll":
     			message = "check path " + parent +" with MK"
     		console.printMessage(self.view,'Debug', message)
-"""
-{ "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
-"""
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
+	"""
+{ "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
+	"""
+
     def run(self,edit):
     	saver.saveAllDirty()
     	try:
     		file_name = self.view.window().active_view().file_name()
     		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except:
+    	except OSError:
     		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
     		return    		    	
-    	file_name = str(file_name)
-    	print(file_name)
     	os.chdir(path)
     	p = pandoc.pandoc()
     	p.convert(file_name)
@@ -181,20 +175,19 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
     		print("open in Browser")
     		Browser(file_name.replace(".md",".html"))
 
-"""
-{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
-"""
 class CreateAllCommand(sublime_plugin.TextCommand):
+	"""
+{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
+	"""
     def run(self,edit):
     	saver.saveAllDirty()
     	try:
     		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except:
+    	except OSError:
     		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
     		return
     	parent = os.path.abspath(os.path.join(path, os.pardir))        
     	os.chdir(path)
-    	p = pandoc.pandoc()
     	m = master.Master(parent)
     	m.run()
     	if(autoload_html):
@@ -204,11 +197,12 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 
 
 
-"""
+class InsertPanelCommand(sublime_plugin.TextCommand):   
+	"""
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
 { "keys": ["alt+shift+l"], "command": "insert_panel", "args": {"tag": "a"} }
-"""
-class InsertPanelCommand(sublime_plugin.TextCommand):   
+	"""
+
 	def run(self, edit, tag):		
 		if tag == "img":
 			# add content to dictionary
