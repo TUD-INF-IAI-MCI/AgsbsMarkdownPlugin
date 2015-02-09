@@ -177,8 +177,9 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
     	os.chdir(path)
     	p = pandoc.pandoc()
     	p.convert(file_name)
-    	if(autoload_html):        	
-        	Browser(file_name.replace(".md",".html"))
+    	if(autoload_html):
+    		print("open in Browser")
+    		Browser(file_name.replace(".md",".html"))
 
 """
 { "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
@@ -197,8 +198,9 @@ class CreateAllCommand(sublime_plugin.TextCommand):
     	m = master.Master(parent)
     	m.run()
     	if(autoload_html):
-        	parent = os.path.join(parent,"inhalt.html")        	
-        	Browser(parent)
+    		parent = os.path.join(parent,"inhalt.html")
+    		print("open ", parent)
+    		Browser(parent)
 
 
 
@@ -342,6 +344,16 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 	def on_cancel(self, input):
 		if input == -1:
 			return
+
+
+class InsertPageCommand(sublime_plugin.TextCommand):   
+	def  run(self, edit):
+		self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
+	def on_done_page(self, input):    
+		if input == -1:
+			return       
+		markdown = '||  - Seite ' +input + ' -'
+		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
 """
 { "keys": ["alt+shift+t"], "command": "insert_table"}
