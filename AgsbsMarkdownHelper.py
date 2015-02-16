@@ -37,7 +37,7 @@ else:
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
-    reload(sys.modules[reloader])
+	reload(sys.modules[reloader])
 
 
 
@@ -81,7 +81,7 @@ class Saver(): # ToDo: function
 							v.run_command("save")
 						else:			
 							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
-												   "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
+													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
 							return
 						
 settings = sublime.load_settings("Agsbshelper.sublime-settings")
@@ -118,82 +118,82 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			console = Console()
 			console.printMessage(self.view,'Debug',path)			
 
-    def on_cancel(self, input):
-    	print(input)
-    	if input == -1:
-    		return
+	def on_cancel(self, input):
+		print(input)
+		if input == -1:
+			return
 
 class CheckWithMkCommand(sublime_plugin.TextCommand):
 	"""
 { "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} }
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
 	"""
-    def run(self, edit, function): 
-    	try:
-    		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except OsError:
-    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
-    		return
-    	parent = os.path.abspath(os.path.join(path, os.pardir))   
-    	mk = mistkerl.Mistkerl()
-    	message = ""
-    	errors = ""
-    	if function =="checkFile":
-    		errors = mk.run(path)
-    	elif function =="checkAll":
-    		errors = mk.run(parent)
-    	if(len(errors) ==0):
-    		console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
-    	else:
-    		formatter = meta.error_formatter()
-    		formatter.set_itemize_sign("  ")
-    		console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
-    	if(Debug):
-    		if function == "checkFile":
-    			message = "check file " + self.view.window().active_view().file_name() +" with MK"
-    		elif function == "checkAll":
-    			message = "check path " + parent +" with MK"
-    		console.printMessage(self.view,'Debug', message)
+	def run(self, edit, function): 
+		try:
+			path = os.path.dirname(self.view.window().active_view().file_name())
+		except OsError:
+			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+			return
+		parent = os.path.abspath(os.path.join(path, os.pardir))   
+		mk = mistkerl.Mistkerl()
+		message = ""
+		errors = ""
+		if function =="checkFile":
+			errors = mk.run(path)
+		elif function =="checkAll":
+			errors = mk.run(parent)
+		if(len(errors) ==0):
+			console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
+		else:
+			formatter = meta.error_formatter()
+			formatter.set_itemize_sign("  ")
+			console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
+		if(Debug):
+			if function == "checkFile":
+				message = "check file " + self.view.window().active_view().file_name() +" with MK"
+			elif function == "checkAll":
+				message = "check path " + parent +" with MK"
+			console.printMessage(self.view,'Debug', message)
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 	"""
 { "keys": ["f5"], "command": "cmd", "args": {"function": "create_html_file"} }
 	"""
 
-    def run(self,edit):
-    	saver.saveAllDirty()
-    	try:
-    		file_name = self.view.window().active_view().file_name()
-    		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except OSError:
-    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
-    		return    		    	
-    	os.chdir(path)
-    	p = pandoc.pandoc()
-    	p.convert(file_name)
-    	if(autoload_html):
-    		print("open in Browser")
-    		Browser(file_name.replace(".md",".html"))
+	def run(self,edit):
+		saver.saveAllDirty()
+		try:
+			file_name = self.view.window().active_view().file_name()
+			path = os.path.dirname(self.view.window().active_view().file_name())
+		except OSError:
+			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
+			return    		    	
+		os.chdir(path)
+		p = pandoc.pandoc()
+		p.convert(file_name)
+		if(autoload_html):
+			print("open in Browser")
+			Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
 	"""
 { "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
 	"""
-    def run(self,edit):
-    	saver.saveAllDirty()
-    	try:
-    		path = os.path.dirname(self.view.window().active_view().file_name())
-    	except OSError:
-    		sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
-    		return
-    	parent = os.path.abspath(os.path.join(path, os.pardir))        
-    	os.chdir(path)
-    	m = master.Master(parent)
-    	m.run()
-    	if(autoload_html):
-    		parent = os.path.join(parent,"inhalt.html")
-    		print("open ", parent)
-    		Browser(parent)
+	def run(self,edit):
+		saver.saveAllDirty()
+		try:
+			path = os.path.dirname(self.view.window().active_view().file_name())
+		except OSError:
+			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+			return
+		parent = os.path.abspath(os.path.join(path, os.pardir))        
+		os.chdir(path)
+		m = master.Master(parent)
+		m.run()
+		if(autoload_html):
+			parent = os.path.join(parent,"inhalt.html")
+			print("open ", parent)
+			Browser(parent)
 
 
 
@@ -202,9 +202,8 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 { "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
 { "keys": ["alt+shift+l"], "command": "insert_panel", "args": {"tag": "a"} }
 	"""
-
 	def run(self, edit, tag):		
-		if tag == "img":
+		if tag == "img":			
 			# add content to dictionary
 			self.image_url =""			
 			if(settings.get("hints")):				
@@ -256,8 +255,8 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		self.view.window().show_input_panel("URL", "", self.on_done_url, self.on_change, self.on_cancel)
 
 	def on_done_url(self, input):
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
+		#  if user cancels with Esc key, do nothing
+		#  if canceled, index is returned as  -1
 		if input == -1 or not input:
 			sublime.error_message("URL darf nicht leer sein")
 			return       
@@ -267,7 +266,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		markdown = "[%s](%s)" % (self.linktext,input.lower())
 		self.view.run_command(
 			"insert_my_text", {"args":            
-            {'text': markdown}})
+			{'text': markdown}})
 
 	def on_done_filename(self, input): 				
 		if input == -1 and not self.image_url:  # esc
@@ -280,55 +279,40 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 	def on_done_img_description(self,description):
 		message = ""
 		img_desc = factories.image_description(self.image_url)
+		if img_desc.img_maxlength > len(description):
+			img_desc.use_outsourced_descriptions(False)
+		else:
+			img_desc.use_outsourced_descriptions(True)
 		img_desc.set_description(description)
 		img_desc.set_title("title_default")				
 		img_output = img_desc.get_output();
 
-		self.writeMd(img_output[0])
+		
 		if(len(img_output)==1):			
-			message = "intern description"
-		else:						
-			message = "extern description"
+			self.writeMd(img_output[0])
+		else:	
+			self.writeMd(img_output[0])
+			self.description_extern(img_output[1])
 		if(Debug):			
 			console.printMessage(self.view, "Debug image", message)
 
 	def writeMd(self,markdown_str):
 		self.view.run_command("insert_my_text", {"args":{'text': markdown_str}})
 
-	def description_extern(self,markdown_str):		
-		path = self.view.file_name()
-		base = os.path.split(path)[0]
-
-	def description_extern_1(self,description):
-		"""
-            link to the alternativ description
-        """
-		link = "Bildbeschreibung von " +self.image_url
-		heading_description = '\n\n## '+link
-		link = link.lower().replace(" ","-")            
-		markdown ='[![Beschreibung ausgelagert](bilder/' +self.image_url +')](bilder.html' +'#' +link +')'               
-		self.view.run_command(
-            "insert_my_text", {"args":            
-            {'text': markdown}})
+	def description_extern(self,description):
 		path = self.view.file_name()
 		base = os.path.split(path)[0]
 		"""
-            try to load bilder.md file or create
-        """
-        #fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
-        #print fd.readlines()
-        #count =  fd.read
+			try to load bilder.md file or create
+		"""		
 		fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
 		os.close(fd)
-		heading_level_one = '# Bilderbeschreibungen \n \n'
-		heading_level_one = heading_level_one.encode('utf-8').strip()
-		with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf8") as fd:
-			line_count = len(fd.readlines())
-			if line_count <=0:
+		heading_level_one = '# Bilderbeschreibungen \n\n'		
+		with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf-8") as fd:
+			if len(fd.readlines()) <=0:
 				fd.write(heading_level_one)
-		with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf8") as fd:            
-			fd.write(heading_description)		
-			fd.write("\n\n"+description) 
+		with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf-8") as fd:            						
+			fd.write(description) 
 
 
 	def on_change(self, input):
@@ -358,13 +342,13 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 	def on_done(self, input):
 		self.createTable(input)
 	def on_change(self, input):
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
+		#  if user cancels with Esc key, do nothing
+		#  if canceled, index is returned as  -1
 		if input == -1:
 			return
 	def on_cancel(self, input):
-        #  if user cancels with Esc key, do nothing
-        #  if canceled, index is returned as  -1
+		#  if user cancels with Esc key, do nothing
+		#  if canceled, index is returned as  -1
 		if input == -1:
 			return
 	def createTable(self, input):
@@ -409,59 +393,56 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
 """
 class AddTagCommand(sublime_plugin.TextCommand):
-     def run(self, edit, tag, markdown_str):
-        screenful = self.view.visible_region()
-        (row,col) = self.view.rowcol(self.view.sel()[0].begin())
-        target = self.view.text_point(row, 0)        
-        # strong and em
-        if tag in ['em', 'strong']:                
-                (row,col) = self.view.rowcol(self.view.sel()[0].begin()) 
-
-                for region in self.view.sel():                	             	
-                    if not region.empty():
-                        selString = self.view.substr(region)                       
-                        word = self.view.word(target)                                               
-                        movecursor = len(word)   
-                        diff = 0
-                        if movecursor > 0:
-                            diff = movecursor/2        
-                        strg = str(diff)
-                    
-                        target = self.view.text_point(row, diff)
-                        self.view.sel().clear() 
-                        if region.a < region.b:
-                            firstPos =  region.a
-                            endPos = region.b
-                        else:
-                            firstPos =  region.b    
-                            endPos = region.a                           
-                        endPos = endPos + len(markdown_str)                        
-                        self.view.insert(edit,firstPos,markdown_str)                        
-                        self.view.insert(edit,endPos,markdown_str)                                            
-        #heading
-        elif tag in ['h']:
-              for region in self.view.sel():
-                    if not region.empty():
-                        firstPos = 0
-                        if region.a < region.b:
-                            firstPos =  region.a
-                        else:
-                            firstPos =  region.b
-                        self.view.insert(edit,firstPos,markdown_str)                       
-        elif tag in ['blockqoute', 'ul', 'ol', 'code']:
-            for region in self.view.sel():
-                    if not region.empty():
-                        lines = self.view.split_by_newlines(region)
-                        for i,line in enumerate(lines):
-                            if tag == 'ol':
-                                number = 1 +i                                     
-                                self.view.insert(edit, line.a+3*i, str(number)+'. ')                                
-                            else:                                            
-                                self.view.insert(edit, line.a+2*i, markdown_str)
-
-        elif tag in ['hr']:
-            self.view.insert(edit, target, markdown_str +"\n")
-     
+	 def run(self, edit, tag, markdown_str):
+	 	screenful = self.view.visible_region()
+	 	(row,col) = self.view.rowcol(self.view.sel()[0].begin())
+	 	target = self.view.text_point(row, 0)
+	 	# strong and em
+	 	if tag in ['em', 'strong']:
+	 		(row,col) = self.view.rowcol(self.view.sel()[0].begin())
+	 		for region in self.view.sel():
+	 			if not region.empty():
+	 				selString = self.view.substr(region)
+	 				word = self.view.word(target)
+	 				movecursor = len(word)   
+	 				diff = 0
+	 				if movecursor > 0:
+	 					diff = movecursor/2        
+	 					strg = str(diff)
+	 					target = self.view.text_point(row, diff)
+	 					self.view.sel().clear()
+	 				if region.a < region.b:
+	 					firstPos =  region.a
+	 					endPos = region.b
+	 				else:
+	 					firstPos =  region.b
+	 					endPos = region.a
+	 					endPos = endPos + len(markdown_str)
+	 					self.view.insert(edit,firstPos,markdown_str)
+	 					self.view.insert(edit,endPos,markdown_str)
+		#heading
+	 	elif tag in ['h']:
+	 		for region in self.view.sel():
+	 			if not region.empty():
+	 				firstPos = 0
+	 				if region.a < region.b:
+	 					firstPos =  region.a
+	 				else:
+	 					firstPos =  region.b
+	 				self.view.insert(edit,firstPos,markdown_str)
+	 	elif tag in ['blockqoute', 'ul', 'ol', 'code']:
+	 		for region in self.view.sel():
+	 			if not region.empty():
+	 				lines = self.view.split_by_newlines(region)
+	 				for i,line in enumerate(lines):
+	 					if tag == 'ol':
+	 						number = 1 +i
+	 						self.view.insert(edit, line.a+3*i, str(number)+'. ')
+	 					else:
+	 						self.view.insert(edit, line.a+2*i, markdown_str)
+	 	elif tag in ['hr']:
+	 		self.view.insert(edit, target, markdown_str +"\n")
+	 
 
 
 
