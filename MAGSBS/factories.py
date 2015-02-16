@@ -161,9 +161,9 @@ get_outsourcing_link; will be either a tuple of (link, content for outsourced
 image. It'll always return a inline description if set by
 use_outsourced_descriptions(False) or will automatically exclude images longer
 than 100 characters."""
-        if(not self.outsource_long_descriptions):
-            if(len(self.description) < self.img_maxlength):
-                return (self.get_inline_description(), )
+        #if(not self.outsource_long_descriptions):
+        if(len(self.description) < self.img_maxlength):
+            return (self.get_inline_description(), )
         if(not self.title):
             raise MissingMandatoryField("Image got outsourced, but no title present.")
         external_text = self.__get_outsourced_title() + '\n\n' +\
