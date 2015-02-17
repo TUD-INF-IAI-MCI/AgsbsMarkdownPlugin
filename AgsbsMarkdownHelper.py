@@ -109,9 +109,14 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 		inputs = input.split("|")    	    
 		path = sublime.active_window().folders()[0]
 		os.chdir(path)
-		preface = bool(inputs[3])
+		preface = bool(int(inputs[3]))
+		# init_lecture(title, section_number,language)		
 		builder = filesystem.init_lecture(inputs[0], int(inputs[1]),
 				lang=inputs[2])
+		if not preface:		
+			print("KEIN vorwort",inputs[3])
+		else:			
+			print("+++vorwort",inputs[3])
 		builder.set_has_preface(preface)
 		builder.generate_structure()
 		if(Debug):
@@ -130,14 +135,25 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 	"""
 	def run(self, edit, function): 
 		try:
-			path = os.path.dirname(self.view.window().active_view().file_name())
-		except OsError:
+			file_name = self.view.window().active_view().file_name()
+			if not file_name:
+					sublime.error_message("Öffnen Sie eine Markdown-Datei um die \nÜberprüfung mit MK zu starten!")		
+					return
+			else:
+				path = os.path.dirname(self.view.window().active_view().file_name())
+		except OSError:
 			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
 			return
 		parent = os.path.abspath(os.path.join(path, os.pardir))   
 		mk = mistkerl.Mistkerl()
 		message = ""
 		errors = ""
+		if(Debug):
+			if function == "checkFile":
+				message = "check file " + self.view.window().active_view().file_name() +" with MK"
+			elif function == "checkAll":
+				message = "check path " + parent +" with MK"
+			console.printMessage(self.view,'Debug', message)
 		if function =="checkFile":
 			errors = mk.run(path)
 		elif function =="checkAll":
