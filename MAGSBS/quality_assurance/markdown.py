@@ -291,7 +291,7 @@ dies bei Foliensätzen vor. Am Besten man setzt das TocDepth so, dass nur die
 Inhaltsverzeichnis erscheinen."""
         last_heading = None
         for lnum, heading_level, text in args[0]:
-            if(heading_level > config.confFactory().get_conf_instance()):
+            if(heading_level > config.confFactory().get_conf_instance()['tocDepth']):
                 continue # skip it
             if last_heading == text:
                 return self.error(error_message, lnum)
