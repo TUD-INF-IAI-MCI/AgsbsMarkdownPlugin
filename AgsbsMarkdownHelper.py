@@ -38,9 +38,6 @@ else:
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
 	reload(sys.modules[reloader])
-
-
-
 #
 # Below this are only helpers
 #
@@ -147,29 +144,24 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 		parent = os.path.abspath(os.path.join(path, os.pardir))   
 		mk = mistkerl.Mistkerl()
 		message = ""
-		errors = ""
-		if(Debug):
-			if function == "checkFile":
-				message = "check file " + self.view.window().active_view().file_name() +" with MK"
-			elif function == "checkAll":
-				message = "check path " + parent +" with MK"
-			console.printMessage(self.view,'Debug', message)
+		errors = ""						
 		if function =="checkFile":
 			errors = mk.run(path)
 		elif function =="checkAll":
-			errors = mk.run(parent)
+			errors = mk.run(parent)			
 		if(len(errors) ==0):
 			console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
 		else:
+			sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
 			formatter = meta.error_formatter()
 			formatter.set_itemize_sign("  ")
 			console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
-		if(Debug):
+		if(Debug):			
 			if function == "checkFile":
 				message = "check file " + self.view.window().active_view().file_name() +" with MK"
 			elif function == "checkAll":
 				message = "check path " + parent +" with MK"
-			console.printMessage(self.view,'Debug', message)
+			console.printMessage(self.view,'Debug '+function, message)
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 	"""
@@ -184,8 +176,8 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 		except OSError:
 			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
 			return    		    	
-		os.chdir(path)
-		p = pandoc.pandoc()
+		os.chdir(path)		
+		p = pandoc.pandoc()		
 		p.convert(file_name)
 		if(autoload_html):
 			print("open in Browser")
@@ -294,11 +286,11 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 
 	def on_done_img_description(self,description):
 		message = ""
-		img_desc = factories.image_description(self.image_url)
+		img_desc = factories.ImageDescription(self.image_url)
 		if img_desc.img_maxlength > len(description):
-			img_desc.use_outsourced_descriptions(False)
+			img_desc.set_outsource_descriptions(False)
 		else:
-			img_desc.use_outsourced_descriptions(True)
+			img_desc.set_outsource_descriptions(True)
 		img_desc.set_description(description)
 		img_desc.set_title("title_default")				
 		img_output = img_desc.get_output();
@@ -340,7 +332,10 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			return
 
 
-class InsertPageCommand(sublime_plugin.TextCommand):   
+class InsertPageCommand(sublime_plugin.TextCommand):
+	"""
+ { "keys": ["alt+shift+p"], "command": "insert_page"}
+	"""   
 	def  run(self, edit):
 		self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
 	def on_done_page(self, input):    
@@ -403,13 +398,14 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 			console.printMessage(self.view, "Debug", message)		
 		# insert markdown
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
-"""
+
+class AddTagCommand(sublime_plugin.TextCommand):
+	"""
 { "keys": ["alt+shift+h"], "command": "add_tag", "args": {"tag": "h", "markdown_str":"#"} }
 { "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} }
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
-"""
-class AddTagCommand(sublime_plugin.TextCommand):
-	 def run(self, edit, tag, markdown_str):
+	"""
+	def run(self, edit, tag, markdown_str):
 	 	screenful = self.view.visible_region()
 	 	(row,col) = self.view.rowcol(self.view.sel()[0].begin())
 	 	target = self.view.text_point(row, 0)
