@@ -1,7 +1,7 @@
 """
 Read in user configuration.
 """
-#pylint: disable=invalid-encoded-data
+#pylint: disable=invalid-encoded-data,line-too-long,too-few-public-methods
 
 import getpass, os, sys
 import datetime, codecs
@@ -19,7 +19,8 @@ GLADTEX_OPTS = '-a -d bilder'
 PYVERSION = int(sys.version[0])
 # as a regular expression all kinds of token which can mark a page
 PAGENUMBERINGTOKENS = ['slide','folie','seite','page']
-PAGENUMBERING_REGEX = '-\s*(' + '|'.join( PAGENUMBERINGTOKENS ) + ')\s+(\d+)\s*-'
+PAGENUMBERING_REGEX = r'-\s*(' + '|'.join(PAGENUMBERINGTOKENS) + \
+                r')\s+(\d+)\s*-'
 
 VALID_PREFACE_BGN = ['v']
 VALID_MAIN_BGN = ['k', 'blatt', 'Blatt', 'paper']
@@ -40,14 +41,13 @@ Limitations: The decorated class cannot be inherited from.
 """
     def __init__(self, decorated):
         self._decorated = decorated
+        self._instance = None
 
     def __call__(self):
         """Returns the singleton instance. Upon its first call, it creates a
 new instance of the decorated class and calls its `__init__` method.  On all
 subsequent calls, the already created instance is returned.  """
-        try:
-            return self._instance
-        except AttributeError:
+        if not self._instance:
             self._instance = self._decorated()
         return self._instance
 
@@ -193,8 +193,9 @@ one instance at a time exists.
                         try:
                             value = int( value )
                         except ValueError:
-                            raise ConfigurationError("The option %s has an invalid value (%s) which can not converted to an integer.\n"\
-                                    % (key, value))
+                            raise ConfigurationError("Option " + key +
+                                    "has invalid,  non-numerical value of " +
+                                    value)
                     self[ key ] = value
                 except IndexError:
                     print(ET.dump( child ))
@@ -204,7 +205,7 @@ one instance at a time exists.
             try:
                 v = int(v)
             except ValueError:
-                raise TypeError("For %s, the value must be convertable to an integer." % k)
+                raise TypeError("Option " + k + ": not a number (%s)" % v)
         dict.__setitem__(self, k, v)
 
 @Singleton
@@ -265,14 +266,13 @@ Please note: if you are in a subdirectory, this will be a path like ../$CONF_FIL
         # if we reached this, we are in the lecture root
         return os.path.abspath( os.path.join(path, CONF_FILE_NAME) )
 
-@Singleton
-class translate():
+class Translate:
     """Replace me through gettext, as soon as its clear how easy it is to ship
 l10n with Windows."""
     def __init__(self):
         self._factory = confFactory()
         self.supported_languages = [ 'de', 'fr' ]
-        self.en_fr = { 
+        self.en_fr = {
             'preface':'introduction',   'appendix':'appendice',
             'chapters':'chapitres', 'pages':'pages',
             'table of contents':'table des matières',
@@ -310,5 +310,5 @@ l10n with Windows."""
         except KeyError:
             return origin
 
-L10N = translate()
+L10N = Translate()
 _ = L10N.get_translation
