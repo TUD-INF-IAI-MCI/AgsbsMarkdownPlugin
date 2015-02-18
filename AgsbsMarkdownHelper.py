@@ -214,14 +214,14 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 		if tag == "img":			
 			# add content to dictionary
 			self.image_url =""			
-			if(settings.get("hints")):				
-				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+			global imagefiles
+			imageFormats = settings.get("image_formats")	
+			imagefiles = self.getFileName(imageFormats)
+			if imagefiles:				
+				if(settings.get("hints")):				
+					messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
 					"\t1. Speicherort des Bildes \n"
 					"\t2. Alternativbeschreibung zum Bild \n")
-			imageFormats = settings.get("image_formats")
-			global imagefiles
-			imagefiles = self.getFileName(imageFormats)
-			if imagefiles:
 				self.show_prompt(imagefiles,tag)
 			else:
 				dirname = os.path.dirname(self.view.file_name())
@@ -230,13 +230,14 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 				message += "Speichern zuerst Bilder in dem Ordner\n"
 				message += dirname +"\n"
 				message += "um ein Bild einfügen zu können." 
-				sublime.error_message(message)	
+				sublime.error_message(message)
+				return		
 		elif tag =="a":
 			if(settings.get("hints")):
 				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
 					"\t1. Linktext, z.B. Webseite der TU Dresden \n"
 					"\t2. URL, http://www.tu-dresden.de  \n")					
-			self.show_prompt(None,tag)
+			self.show_prompt(None,tag) 
 	def show_prompt(self, listFile,tag):
 		if tag == "img":
 			self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)
