@@ -17,7 +17,7 @@
                         [
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AGSBS Markdown Helper/Default (Linux).sublime-keymap",
+                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Linux).sublime-keymap",
                                 "platform": "Linux"
                                 },
 
@@ -25,7 +25,7 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AGSBS Markdown Helper/Default (Windows).sublime-keymap",
+                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Windows).sublime-keymap",
                                 "platform": "Windows"
                                 },
 
@@ -33,11 +33,78 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AGSBS Markdown Helper/Default (OSX).sublime-keymap",
+                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (OSX).sublime-keymap",
                                 "platform": "OSX"
                                 },
 
-                                "caption": "Shortcuts"
+                                "caption": "Shortcuts",                                
+                            },
+                            {   "caption": "Tastenkürzel",
+                                "children":
+                                [
+                                    {
+                                        "caption": "Element hinzufügen",
+                                        "children":[
+                                            {                                                
+                                                "command": "insert_panel",
+                                                "args": {"tag": "img"},
+                                                "caption": "Bild hinzufügen"
+                                            },
+                                            {
+                                                "command": "insert_panel",
+                                                "args": {"tag": "a"},
+                                                "caption": "Link hinzufügen"
+                                            },
+                                            {
+                                                "command": "add_tag",
+                                                "args": {"tag": "table", "markdown_str": " "},
+                                                "caption": "Tabelle hinzufügen"
+                                            }
+
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Formatierung",
+                                        "children":[
+                                            {                                                    
+                                                "command" : "add_tag",
+                                                "args": {"tag": "strong", "markdown_str": "**"},
+                                                "caption": "fett"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "em", "markdown_str": "_"},
+                                                "caption": "kursiv"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"hr": "ol", "markdown_str": "----------"},
+                                                "caption": "horizontale Linie"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "ol", "markdown_str": "1."},
+                                                "caption": "nummerierte Liste"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "ul", "markdown_str": "-"},
+                                                "caption": "unnummerierte Liste"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "code", "markdown_str": "\t"},
+                                                "caption": "Quellcode"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "blockqoute", "markdown_str": "> "},
+                                                "caption": "Zitat"
+                                            }
+                                        ]
+
+                                    }
+                                ]
                             }
                         ]
                     }
