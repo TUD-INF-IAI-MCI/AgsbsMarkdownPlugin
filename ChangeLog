@@ -1,0 +1,15 @@
+0.1.2:
+
+ * Mistkerl völlig umgebaut; nun für alle möglichen Ausgabemethoden
+   formatierbar
+ * pylint-Sauberkeit für die meisten Klassen
+ * einheitliche Schnittstelle zum Erstellen von Lehrmaterialien
+ * aussagekräftige Fehlermeldung, wenn Pandoc fehlt
+ * viele weitere Fehler behoben
+
+0.1.1
+
+ * Mistkerl eingeführt
+ * Pfadnamen für Navigationslinks auch unter Windows mit Slashes
+
+0.1: Nie VERÖFFENTLICHT
