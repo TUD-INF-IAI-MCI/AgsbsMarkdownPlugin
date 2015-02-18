@@ -65,6 +65,14 @@ class Console():
 		print(message)
 		print("\n######## END ",category," #########")  
 
+class Bunch(object):
+
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
+
 class Saver(): # ToDo: function
 	def saveAllDirty(self):			
 		for w in sublime.windows():
@@ -204,64 +212,50 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 			Browser(parent)
 
 
-
-class InsertPanelCommand(sublime_plugin.TextCommand):   
+class InsertLinkPanelCommand(sublime_plugin.TextCommand): 
 	"""
-{ "keys": ["ctrl+alt+i"], "command": "insert_panel", "args": {"tag": "img"}},
-{ "keys": ["alt+shift+l"], "command": "insert_panel", "args": {"tag": "a"} }
+{ "keys": ["alt+shift+l"], "command": "insert_link_panel"}
 	"""
-	def run(self, edit, tag):		
-		if tag == "img":			
-			# add content to dictionary
-			self.image_url =""			
-			global imagefiles
-			imageFormats = settings.get("image_formats")	
-			imagefiles = self.getFileName(imageFormats)
-			if imagefiles:				
-				if(settings.get("hints")):				
-					messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
-					"\t1. Speicherort des Bildes \n"
-					"\t2. Alternativbeschreibung zum Bild \n")
-				self.show_prompt(imagefiles,tag)
-			else:
-				dirname = os.path.dirname(self.view.file_name())
-				dirname = os.path.join(dirname,"bilder")
-				message = "Im Ordner Bilder sind keine Bilddaten gespeichert.\n"
-				message += "Speichern zuerst Bilder in dem Ordner\n"
-				message += dirname +"\n"
-				message += "um ein Bild einfügen zu können." 
-				sublime.error_message(message)
-				return		
-		elif tag =="a":
-			if(settings.get("hints")):
+	def run(self, edit):
+		self.counter = 0
+		self.keys = ['url', 'linktext']
+		#create Dictionary
+		self.dictionary ={
+			'url': Bunch(name='URL', value=''),
+			'linktext': Bunch(name='Linktext', value=''),
+			
+		}		
+		if(settings.get("hints")):
 				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
-					"\t1. Linktext, z.B. Webseite der TU Dresden \n"
-					"\t2. URL, http://www.tu-dresden.de  \n")					
-			self.show_prompt(None,tag) 
-	def show_prompt(self, listFile,tag):
-		if tag == "img":
-			self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)
-		elif tag == "a":
-			self.view.window().show_input_panel("Linktext", "", self.one_done_linktext, self.on_change, self.on_cancel)
+					"\t1. URL, http://www.tu-dresden.de  \n"
+				  "\t2. Linktext, z.B. Webseite der TU Dresden \n")
+		self.show_prompt()
 
-	def getFileName(self, imageFormats):		
-		listFiles = []		
-		filename = self.view.file_name()		
-		dir = os.path.dirname(filename)					
-		for (dirname,dirs, files) in os.walk(dir):					
-			for file in files:				
-				if file.endswith(tuple(imageFormats)):
-					parentname = os.path.basename(os.path.normpath(dirname))
-					listFiles.append(parentname +"/" + file)
-		return listFiles
+	def show_prompt(self):
+		self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
 
-	def one_done_linktext(self,input):
-		if input == -1 or not input:			
-			sublime.error_message("Linktext darf nicht leer sein")			
-			return
-		else:			
-			self.linktext = input
-		self.view.window().show_input_panel("URL", "", self.on_done_url, self.on_change, self.on_cancel)
+	def check_user_input(self, key, content):
+		return {
+			'url': lambda s: s,
+			'linktext': lambda s: s,
+    }[key](content)
+	
+	def on_done(self,content):    
+		self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)
+		self.counter += 1
+		if self.counter < (len(self.dictionary)):  # skip last index
+			self.show_prompt()
+		else:
+			self.input_done()
+
+	def input_done(self,):		
+		url = self.dictionary['url'].value.lower()
+		if(not url.startswith("http://") or not url.startswith("https://")):
+			url = "http://"+url
+		markdown = "[%s](%s)" % (self.dictionary['linktext'].value, url)
+		self.view.run_command(
+			"insert_my_text", {"args":            
+			{'text': markdown}})
 
 	def on_done_url(self, input):
 		#  if user cancels with Esc key, do nothing
@@ -277,26 +271,96 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			"insert_my_text", {"args":            
 			{'text': markdown}})
 
+class InsertImagePanelCommand(sublime_plugin.TextCommand):   
+	"""
+{ "keys": ["ctrl+alt+i"], "command": "insert__image_panel"}
+	"""
+	def run(self, edit):		
+		# 0 is location of picture not a input_panel
+		self.counter = 1
+		self.keys = ['location', 'title', 'description']
+		#create Dictionary
+		self.dictionary ={
+			'location': Bunch(name='Speicherort', value=''),
+			'title': Bunch(name='Bildname', value=''),
+			'description': Bunch(name='Bildbeschreibung', value=''),
+		}	
+		self.imageFormats = settings.get("image_formats")	
+		self.imagefiles = self.getFileName(self.imageFormats)
+		if self.imagefiles:				
+			if(settings.get("hints")):				
+				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+				"\t1. Speicherort des Bildes \n"
+				"\t2. Alternativbeschreibung zum Bild \n")
+			self.show_prompt(self.imagefiles)
+		else:
+			dirname = os.path.dirname(self.view.file_name())
+			dirname = os.path.join(dirname,"bilder")
+			message = "Im Ordner Bilder sind keine Bilddaten gespeichert.\n"
+			message += "Speichern zuerst Bilder in dem Ordner\n"
+			message += dirname +"\n"
+			message += "um ein Bild einfügen zu können." 
+			sublime.error_message(message)
+			return		
+
+	def getFileName(self, imageFormats):		
+		listFiles = []		
+		filename = self.view.file_name()		
+		dir = os.path.dirname(filename)					
+		for (dirname,dirs, files) in os.walk(dir):					
+			for file in files:				
+				if file.endswith(tuple(imageFormats)):
+					parentname = os.path.basename(os.path.normpath(dirname))
+					listFiles.append(parentname +"/" + file)
+		return listFiles
+
+	def show_prompt(self, listFile):		
+		self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)		
+			
 	def on_done_filename(self, input): 				
-		if input == -1 and not self.image_url:  # esc
-			sublime.error_message("Wählen Sie eine Bilddatei aus!")			
+		if input == -1:  # esc
+			#sublime.error_message("Wählen Sie eine Bilddatei aus!")			
+			print("input = -1???")
 		elif input != -1 :
-			self.image_url = imagefiles[input]					
-			self.view.window().show_input_panel("Bildbeschreibung", "Bildbeschreibung hier einfügen", self.on_done_img_description, None, None)                                               
+			self.dictionary["location"].value = self.check_user_input(self.keys[0], self.imagefiles[input])
+			self.show_prompt_image()
+	
+	def show_prompt_image(self):			
+		self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
+	
+	def check_user_input(self, key, content):
+		return {
+    	'location': lambda s: s,
+    	'title': lambda s: s,
+    	'description': lambda s: s,
+		}[key](content)
 
+	def on_done(self,content):
+		self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)	
+		self.counter += 1
+		if self.counter < (len(self.dictionary)): # skip last index
+			self.show_prompt_image()
+		else:
+			self.input_done()
+		
 
-	def on_done_img_description(self,description):
-		message = ""
-		img_desc = factories.ImageDescription(self.image_url)
-		if img_desc.img_maxlength > len(description):
+	def input_done(self):
+		"""
+		dictionary-content
+		'location': Bunch(name='Speicherort', value=''),
+				'title': Bunch(name='Bildname', value=''),
+				'description': Bunch(name='Bildbeschreibung', value=''),
+		}
+		"""		
+		message = ""		
+		img_desc = factories.ImageDescription(self.dictionary['location'].value)								
+		if img_desc.img_maxlength > len(self.dictionary['description'].value):
 			img_desc.set_outsource_descriptions(False)
 		else:
-			img_desc.set_outsource_descriptions(True)
-		img_desc.set_description(description)
-		img_desc.set_title("title_default")				
-		img_output = img_desc.get_output();
-
-		
+			img_desc.set_outsource_descriptions(True)		
+		img_desc.set_description(self.dictionary['description'].value)
+		img_desc.set_title(self.dictionary['title'].value)				
+		img_output = img_desc.get_output();				
 		if(len(img_output)==1):			
 			self.writeMd(img_output[0])
 		else:	
@@ -321,7 +385,7 @@ class InsertPanelCommand(sublime_plugin.TextCommand):
 			if len(fd.readlines()) <=0:
 				fd.write(heading_level_one)
 		with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf-8") as fd:            						
-			fd.write(description) 
+			fd.write("\n"+description) 
 
 
 	def on_change(self, input):
