@@ -192,8 +192,11 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
 			return    		    	
 		os.chdir(path)		
-		p = pandoc.pandoc()		
-		p.convert(file_name)
+		p = pandoc.pandoc()	
+		try:	
+			p.convert(file_name)
+		except FileNotFoundError:
+			sublime.error_message("Sie müssen Pandoc installieren.")
 		if(autoload_html):
 			print("open in Browser")
 			Browser(file_name.replace(".md",".html"))
