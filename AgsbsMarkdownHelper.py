@@ -85,7 +85,7 @@ class Saver(): # ToDo: function
 						if settings.get("autosave"):
 							v.run_command("save")
 						else:			
-							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
+							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann kÃ¶nnten die generierten Dateien\n"
 													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
 							return
 						
@@ -115,9 +115,8 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 		if sublime.active_window().folders():
 			path = sublime.active_window().folders()[0]
 		else:
-			print("ü")
-			message = u"Sie müssen ein Projekt anlegen und einen Ordner auswählen,\n"
-			message += u"um die Buchstruktur anlegen zu können."
+			message = u"Sie mÃ¼ssen ein Projekt anlegen und einen Ordner auswÃ¤hlen,\n"
+			message += u"um die Buchstruktur anlegen zu kÃ¶nnen."
 			sublime.error_message(message)
 			return
 		os.chdir(path)
@@ -149,12 +148,12 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 		try:
 			file_name = self.view.window().active_view().file_name()
 			if not file_name:
-					sublime.error_message("Öffnen Sie eine Markdown-Datei um die \nÜberprüfung mit MK zu starten!")		
+					sublime.error_message("Ã–ffnen Sie eine Markdown-Datei um die \nÃœberprÃ¼fung mit MK zu starten!")		
 					return
 			else:
 				path = os.path.dirname(self.view.window().active_view().file_name())
 		except OSError:
-			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+			sublime.error_message("Ã–ffnen Sie eine Markdown-Datei um die Convertierung zu starten")
 			return
 		parent = os.path.abspath(os.path.join(path, os.pardir))   
 		mk = mistkerl.Mistkerl()
@@ -190,17 +189,17 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 			if file_name and file_name.lower().endswith(".md"):
 				path = os.path.dirname(self.view.window().active_view().file_name())
 			else:
-				sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")  
+				sublime.error_message("Ã–ffnen Sie eine Markdown-Datei um die Convertierung zu starten")  
 				return
 		except OSError:
-			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
+			sublime.error_message("Ã–ffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
 			return    		    	
 		os.chdir(path)		
 		p = pandoc.pandoc()	
 		try:	
 			p.convert(file_name)
 		except FileNotFoundError:
-			sublime.error_message("Sie müssen Pandoc installieren.")
+			sublime.error_message("Sie mÃ¼ssen Pandoc installieren.")
 			return
 		if(autoload_html):
 			print("open in Browser")
@@ -215,7 +214,7 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 		try:
 			path = os.path.dirname(self.view.window().active_view().file_name())
 		except OSError:
-			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+			sublime.error_message("Ã–ffnen Sie eine Markdown-Datei um die Convertierung zu starten")
 			return
 		parent = os.path.abspath(os.path.join(path, os.pardir))        
 		os.chdir(path)
@@ -241,7 +240,7 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
 			
 		}		
 		if(settings.get("hints")):
-				messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+				messageBox.showMessageBox("Sie wollen ein Link hinzufÃ¼gen. Es sind 2 Eingaben erforderlich: \n"
 					"\t1. URL, http://www.tu-dresden.de  \n"
 				  "\t2. Linktext, z.B. Webseite der TU Dresden \n")
 		self.show_prompt()
@@ -304,7 +303,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 		self.imagefiles = self.getFileName(self.imageFormats)
 		if self.imagefiles:				
 			if(settings.get("hints")):				
-				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+				messageBox.showMessageBox("Sie wollen ein Bild hinzufÃ¼gen. Es sind 2 Eingaben erforderlich: \n"
 				"\t1. Speicherort des Bildes \n"
 				"\t2. Alternativbeschreibung zum Bild \n")
 			self.show_prompt(self.imagefiles)
@@ -314,7 +313,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 			message = "Im Ordner Bilder sind keine Bilddaten gespeichert.\n"
 			message += "Speichern zuerst Bilder in dem Ordner\n"
 			message += dirname +"\n"
-			message += "um ein Bild einfügen zu können." 
+			message += "um ein Bild einfÃ¼gen zu kÃ¶nnen." 
 			sublime.error_message(message)
 			return		
 
@@ -334,7 +333,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 			
 	def on_done_filename(self, input): 				
 		if input == -1:  # esc
-			#sublime.error_message("Wählen Sie eine Bilddatei aus!")			
+			#sublime.error_message("W?len Sie eine Bilddatei aus!")			
 			print("input = -1???")
 		elif input != -1 :
 			self.dictionary["location"].value = self.check_user_input(self.keys[0], self.imagefiles[input])
@@ -448,7 +447,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 			rows = int(input.split("|")[1])
 		except ValueError:
 			messageBox.showMessageBox("Geben Sie die Spalten und Zeilen getrennt mit einem \"|\" an. \n"
-				"Zum Beispiel für eine Tabelle mit 3 Spalten und 5 Reihen geben Sie \n"
+				"Zum Beispiel fÃ¼r eine Tabelle mit 3 Spalten und 5 Reihen geben Sie \n"
 				"3|5 ein!")
 			return
 		
@@ -462,7 +461,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 					cn = c + 1 #colnumber
 					rn = r + 1 #rownumber
 					print("#######rn",r)
-					cellValue = "Wert für Spalte %d und Zeile %d" % (cn,rn)
+					cellValue = "Wert fÃ¼r Spalte %d und Zeile %d" % (cn,rn)
 				markdown += cellValue + "|"
 			if(r == 0): 
 				markdown += "\n" # line break
