@@ -100,9 +100,9 @@
                                         "caption": "Formatierung",
                                         "children":[
                                             {                                                    
-                                                "command" : "add_tag",
-                                                "args": {"tag": "strong", "markdown_str": "**"},
-                                                "caption": "fett"
+                                                "command" : "add_tag",                                                
+                                                "caption": "fett",
+                                                "args": {"tag": "strong", "markdown_str": "**"}
                                             },
                                             {
                                                 "command" : "add_tag",
@@ -111,7 +111,7 @@
                                             },
                                             {
                                                 "command" : "add_tag",
-                                                "args": {"hr": "ol", "markdown_str": "----------"},
+                                                "args": {"tag": "hr", "markdown_str": "----------"},
                                                 "caption": "horizontale Linie"
                                             },
                                             {
