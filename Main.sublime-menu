@@ -17,7 +17,7 @@
                         [
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Linux).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Linux).sublime-keymap",
                                 "platform": "Linux"
                                 },
 
@@ -25,7 +25,7 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Windows).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Windows).sublime-keymap",
                                 "platform": "Windows"
                                 },
 
@@ -33,32 +33,65 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (OSX).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (OSX).sublime-keymap",
                                 "platform": "OSX"
                                 },
 
                                 "caption": "Shortcuts",                                
                             },
+                            {
+                                "command": "open_file", 
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbshelper.sublime-settings",                                
+                                },
+                                "caption": "Plugin konfigurieren",                                
+                            },
                             {   "caption": "Tastenkürzel",
-                                "children":
+                                "children":                                
                                 [
+                                    {
+                                        "caption": "MATUC Behle",
+                                        "children": [
+                                                {                                                
+                                                "command": "create_structure",                                                
+                                                "caption": "Struktur generieren"
+                                                },
+                                                {                                                
+                                                "command": "check_with_mk",                                                
+                                                "caption": "Datei überprüfen",
+                                                "args":{"function": "checkFile"},
+                                                },
+                                                {                                                
+                                                "command": "check_with_mk",                                                
+                                                "caption": "Alle Dateien überprüfen",
+                                                "args":{"function": "checkAll"},
+                                                },
+                                                {                                                
+                                                "command": "create_html_file",                                                
+                                                "caption": "HTML-Datei generieren"
+                                                },{                                                
+                                                "command": "create_all",                                                
+                                                "caption": "Alle HTML-Dateien generieren"
+                                                }                                                
+                                        ]
+                                    },
                                     {
                                         "caption": "Element hinzufügen",
                                         "children":[
                                             {                                                
-                                                "command": "insert_panel",
-                                                "args": {"tag": "img"},
+                                                "command": "insert_image_panel",                                                
                                                 "caption": "Bild hinzufügen"
                                             },
                                             {
-                                                "command": "insert_panel",
-                                                "args": {"tag": "a"},
+                                                "command": "insert_link_panel",                                                
                                                 "caption": "Link hinzufügen"
                                             },
                                             {
-                                                "command": "add_tag",
-                                                "args": {"tag": "table", "markdown_str": " "},
+                                                "command": "insert_table",                                                
                                                 "caption": "Tabelle hinzufügen"
+                                            },
+                                            {
+                                                "command": "insert_page",                                                
+                                                "caption": "Seite hinzufügen"
                                             }
 
                                         ]
