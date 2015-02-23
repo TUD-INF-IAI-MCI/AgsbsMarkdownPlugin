@@ -81,9 +81,9 @@ class Saver(): # ToDo: function
 					dirty_unname = True
 					# maybe toDo 					
 				elif v.file_name().endswith(".md"):
-					if v.is_dirty():						
+					if v.is_dirty():										
 						if settings.get("autosave"):
-							v.run_command("save")
+							v.run_command("save")							
 						else:			
 							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
 													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
@@ -262,10 +262,10 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
 		else:
 			self.input_done()
 
-	def input_done(self,):		
-		url = self.dictionary['url'].value.lower()
-		if(not url.startswith("http://") or not url.startswith("https://")):
-			url = "http://"+url
+	def input_done(self):		
+		url = self.dictionary['url'].value.lower()			
+		if(not url.startswith("http://") and not url.startswith("https://")):
+			url = "http://"+url		
 		markdown = "[%s](%s)" % (self.dictionary['linktext'].value, url)
 		self.view.run_command(
 			"insert_my_text", {"args":            
