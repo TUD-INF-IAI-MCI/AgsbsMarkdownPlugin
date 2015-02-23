@@ -17,7 +17,7 @@
                         [
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Linux).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Linux).sublime-keymap",
                                 "platform": "Linux"
                                 },
 
@@ -25,7 +25,7 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (Windows).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Windows).sublime-keymap",
                                 "platform": "Windows"
                                 },
 
@@ -33,7 +33,7 @@
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/AgsbsMarkdownPlugin/Default (OSX).sublime-keymap",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (OSX).sublime-keymap",
                                 "platform": "OSX"
                                 },
 
