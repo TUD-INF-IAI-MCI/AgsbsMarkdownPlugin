@@ -305,7 +305,8 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 			if(settings.get("hints")):				
 				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
 				"\t1. Speicherort des Bildes \n"
-				"\t2. Alternativbeschreibung zum Bild \n")
+				"\t2. Name des Bildes \n"
+				"\t3. Alternativbeschreibung zum Bild \n")
 			self.show_prompt(self.imagefiles)
 		else:
 			dirname = os.path.dirname(self.view.file_name())
@@ -484,12 +485,12 @@ class AddTagCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} }
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
 	"""
-	def run(self, edit, tag, markdown_str):
-	 	screenful = self.view.visible_region()
-	 	(row,col) = self.view.rowcol(self.view.sel()[0].begin())
-	 	target = self.view.text_point(row, 0)
+	def run(self, edit, tag, markdown_str):		
+		screenful = self.view.visible_region()		
+		(row,col) = self.view.rowcol(self.view.sel()[0].begin())		
+		target = self.view.text_point(row, 0)
 	 	# strong and em
-	 	if tag in ['em', 'strong']:
+		if tag in ['em', 'strong']:
 	 		(row,col) = self.view.rowcol(self.view.sel()[0].begin())
 	 		for region in self.view.sel():
 	 			if not region.empty():
@@ -500,19 +501,20 @@ class AddTagCommand(sublime_plugin.TextCommand):
 	 				if movecursor > 0:
 	 					diff = movecursor/2        
 	 					strg = str(diff)
-	 					target = self.view.text_point(row, diff)
-	 					self.view.sel().clear()
+	 					target = self.view.text_point(row, diff)	 						 					
 	 				if region.a < region.b:
 	 					firstPos =  region.a
 	 					endPos = region.b
 	 				else:
 	 					firstPos =  region.b
 	 					endPos = region.a
-	 					endPos = endPos + len(markdown_str)
-	 					self.view.insert(edit,firstPos,markdown_str)
-	 					self.view.insert(edit,endPos,markdown_str)
+	 				endPos += len(markdown_str) 
+	 				
+	 				self.view.sel().clear()
+	 				self.view.insert(edit,firstPos,markdown_str)
+	 				self.view.insert(edit,endPos,markdown_str)
 		#heading
-	 	elif tag in ['h']:
+		elif tag in ['h']:
 	 		for region in self.view.sel():
 	 			if not region.empty():
 	 				firstPos = 0
@@ -521,7 +523,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
 	 				else:
 	 					firstPos =  region.b
 	 				self.view.insert(edit,firstPos,markdown_str)
-	 	elif tag in ['blockqoute', 'ul', 'ol', 'code']:
+		elif tag in ['blockqoute', 'ul', 'ol', 'code']:
 	 		for region in self.view.sel():
 	 			if not region.empty():
 	 				lines = self.view.split_by_newlines(region)
@@ -531,7 +533,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
 	 						self.view.insert(edit, line.a+3*i, str(number)+'. ')
 	 					else:
 	 						self.view.insert(edit, line.a+2*i, markdown_str)
-	 	elif tag in ['hr']:
+		elif tag in ['hr']:
 	 		self.view.insert(edit, target, markdown_str +"\n")
 	 
 
