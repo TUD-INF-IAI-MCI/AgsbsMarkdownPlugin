@@ -1,4 +1,0 @@
-- changes in path of *.sublime-keymap
-- avoid exception if a none or wrong file is selected
-- avoid exception if no pandoc is installed
-- show error message if an exception occurs
