@@ -7,7 +7,8 @@ Refactoring for support of Sublime Text 3
 		- autosave - saves all changed md-files before generating files
 		- image_formats - which image format will be listed in quickview, default formats are jpg, png, svg
 		- table_default_values - add the value "Wert für Spalte x und Zeile y" (translation value of column x and row y)
-		- autoload_html - if true the generated file (generation with key F6) or index.html (generation with key F6) will be opened in the system default browser
+		- autoload_html - if true the generated file (generation with key F6) or index.html (generation with key F6) \
+		will be opened in the system default browser
 * add hints for:
 	+ add a link
 	+ add image
