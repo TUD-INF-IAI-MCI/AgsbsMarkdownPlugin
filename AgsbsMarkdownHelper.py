@@ -101,12 +101,35 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 { "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
 	"""
 	def run(self,edit):
-		self.view.window().show_input_panel("Struktur anlegen",
-				"title|kapitel|sprache|vorwort", self.one_done, None,
-				self.on_cancel)
+		self.counter = 0
+		self.keys = ['title', 'chapter_count','language','preface']
+		self.dictionary ={
+			'title': Bunch(name='Titel', value=''),
+			'chapter_count': Bunch(name='Kapitel', value=''),
+			'language': Bunch(name='Sprache', value=''),
+			'preface': Bunch(name='Vorwort', value=''),
+		}	
+		if(settings.get("hints")):
+			messageBox.showMessageBox("Zum Anlegen der Struktur geben Sie bitte folgende Werte ein \n"
+				"\tTitel = Buch oder Lehrmaterial-Name\n"
+				"\tKapitelanzahl = erlaubte Werte sind ganze Zahlen\n"
+				"\tSprache = erlaubte Werte sind de oder en \n"
+				"\tVorwort = erlaubte Werte sind ja oder nein")		
+		self.show_prompt()
+	def show_prompt(self):
+		self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
 
-	def one_done(self, input):
-		inputs = input.split("|") 
+	def on_done(self, input):
+		value = self.check_user_input(self.keys[self.counter], input)
+		if value is not None:
+			self.dictionary[self.keys[self.counter]].value = value
+			self.counter += 1
+		if self.counter < (len(self.dictionary)):  
+			self.show_prompt()
+		else:
+			self.input_done()
+
+	def input_done(self):
 		if sublime.active_window().folders():
 			path = sublime.active_window().folders()[0]
 		else:
@@ -114,20 +137,43 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			message += u"um die Buchstruktur anlegen zu können."
 			sublime.error_message(message)
 			return
+		cwd = os.getcwd()
 		os.chdir(path)
-		preface = bool(int(inputs[3]))
-		# init_lecture(title, section_number,language)		
-		builder = filesystem.init_lecture(inputs[0], int(inputs[1]),
-				lang=inputs[2])
-		if not preface:		
-			print("KEIN vorwort",inputs[3])
-		else:			
-			print("+++vorwort",inputs[3])
-		builder.set_has_preface(preface)
+		print(self.dictionary['preface'].value)
+		builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
+				lang=self.dictionary['language'].value)
+		builder.set_has_preface(self.dictionary['preface'].value)
 		builder.generate_structure()
 		if(Debug):
 			console = Console()
-			console.printMessage(self.view,'Debug',path)			
+			console.printMessage(self.view,'Debug',path)	
+		os.chdir(cwd)
+	def check_user_input(self, key, content):
+		error = False
+		if key == 'title':
+			error =  False
+		if key == 'chapter_count':
+			try: 
+				content = int(content)
+				error =  False
+			except ValueError:
+				error =  True
+				messageBox.showMessageBox("Kapitelanzahl muss eine Zahl sein!")												
+		elif key == 'language':	
+			if not content in ['de','en']:	
+				error =  True
+				messageBox.showMessageBox("Werte für die Sprache sind nur \"de\" und \"en\"")			
+		elif key == 'preface':	
+			if not content in ['ja','nein']:
+				messageBox.showMessageBox("Werte für das Vorwort sind nur \"ja\" und \"nein\"")
+				error =  True
+			else:			
+				content = True if content.lower() in "ja" else False
+		if not error: 					
+			return content			
+		else: 
+			self.counter = self.keys.index(key)
+			return None		
 
 	def on_cancel(self, input):
 		print(input)
@@ -252,7 +298,7 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
 	def on_done(self,content):    
 		self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)
 		self.counter += 1
-		if self.counter < (len(self.dictionary)):  # skip last index
+		if self.counter < (len(self.dictionary)):  
 			self.show_prompt()
 		else:
 			self.input_done()
