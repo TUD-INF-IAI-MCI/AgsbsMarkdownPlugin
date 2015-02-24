@@ -19,18 +19,13 @@ if VERSION > 3000:
 	from .agsbs_infrastructure.MAGSBS import pandoc
 	from .agsbs_infrastructure.MAGSBS import filesystem
 	from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
-	from .agsbs_infrastructure.MAGSBS import factories
-	#from .agsbs_infrastructure.MAGSBS import .errors
-	#from .agsbs_infrastructure.MAGSBS.filesystem import *
-	#from .agsbs_infrastructure.MAGSBS.mparser import *
-	#from .agsbs_infrastructure.MAGSBS.errors import *
-	#from .agsbs_infrastructure.MAGSBS.pandocfilters import *
-	
-	#from .MAGSBS.config import *
-	
-	#from .MAGSBS.matuc import *
-	#from .MAGSBS.lib.enum import *
-	
+	from .agsbs_infrastructure.MAGSBS import factories	
+	plugin_path = os.path.split(os.path.abspath(__file__))[0]
+	if not plugin_path in os.environ['PATH']:
+		if(sys.platform.lower().startswith("win")):		
+			os.environ['PATH'] +=";"+plugin_path+os.sep + "bin"					
+		else:
+			os.environ['PATH'] +=":"+plugin_path+os.sep + "bin"			
 else: 
 	sublime.error_message("sublime version  < 3; not supported")
 	
