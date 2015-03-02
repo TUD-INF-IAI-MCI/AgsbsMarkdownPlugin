@@ -5,5 +5,5 @@
 	"autosave": true,
 	"image_formats": [".jpg",".png",".svg"],
 	"autoload_html": true,
-	"table_path": "tabellen",
+	"table_path": "tabellen"
 }
