@@ -49,7 +49,7 @@
                                 "children":                                
                                 [
                                     {
-                                        "caption": "MATUC Behle",
+                                        "caption": "MATUC Befehle",
                                         "children": [
                                                 {                                                
                                                 "command": "create_structure",                                                
