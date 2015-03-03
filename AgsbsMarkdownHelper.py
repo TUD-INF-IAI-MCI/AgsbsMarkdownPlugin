@@ -138,8 +138,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			sublime.error_message(message)
 			return
 		cwd = os.getcwd()
-		os.chdir(path)
-		print(self.dictionary['preface'].value)
+		os.chdir(path)		
 		builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
 				lang=self.dictionary['language'].value)
 		builder.set_has_preface(self.dictionary['preface'].value)
@@ -175,8 +174,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			self.counter = self.keys.index(key)
 			return None		
 
-	def on_cancel(self, input):
-		print(input)
+	def on_cancel(self, input):		
 		if input == -1:
 			return
 
@@ -242,8 +240,7 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 		except FileNotFoundError:
 			sublime.error_message("Sie müssen Pandoc installieren.")
 			return
-		if(autoload_html):
-			print("open in Browser")
+		if(autoload_html):			
 			Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
@@ -262,8 +259,7 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 		m = master.Master(parent)
 		m.run()
 		if(autoload_html):
-			parent = os.path.join(parent,"inhalt.html")
-			print("open ", parent)
+			parent = os.path.join(parent,"inhalt.html")			
 			Browser(parent)
 
 
@@ -501,8 +497,7 @@ class InsertTableCommand(sublime_plugin.TextCommand):
 				cellValue = ""
 				if(	settings.get("table_default_values")):
 					cn = c + 1 #colnumber
-					rn = r + 1 #rownumber
-					print("#######rn",r)
+					rn = r + 1 #rownumber					
 					cellValue = "Wert für Spalte %d und Zeile %d" % (cn,rn)
 				markdown += cellValue + "|"
 			if(r == 0): 
