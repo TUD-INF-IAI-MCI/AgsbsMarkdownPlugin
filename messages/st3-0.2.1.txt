@@ -1,1 +1,4 @@
-st3-0.2.1.txt
+# Changes
+
+- remove commas in message.json
+- add function for adding pandoc to path
