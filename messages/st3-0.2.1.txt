@@ -1,0 +1,4 @@
+# Changes
+
+- remove commas in message.json
+- add function for adding pandoc to path

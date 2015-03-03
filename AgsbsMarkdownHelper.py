@@ -184,6 +184,7 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
 	"""
 	def run(self, edit, function): 
+		saver.saveAllDirty()
 		try:
 			file_name = self.view.window().active_view().file_name()
 			if not file_name:
@@ -460,6 +461,34 @@ class InsertPageCommand(sublime_plugin.TextCommand):
 			return       
 		markdown = '||  - Seite ' +input + ' -'
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
+
+class ImportCsvTableCommand(sublime_plugin.TextCommand):
+	def run(self,edit):
+		csvfiles = self.getCsvFile()
+		self.show_prompt(csvfiles)		
+	def show_prompt(self, listFile):
+		print("listFile", listFile)	
+		self.view.window().show_quick_panel(listFile,self.on_done,sublime.MONOSPACE_FONT)		
+
+	def on_done(self,input):
+		if input == -1:
+			print("FUCK -1")
+		elif input != -1:
+			print("INPUT",input)			
+
+	def getCsvFile(self):
+		listFiles = []		
+		filename = self.view.file_name()
+		table_path = ""
+		if  filename is not None:
+			dir = os.path.dirname(filename)
+			path = os.path.dirname(self.view.window().active_view().file_name())
+			table_path = os.path.join(os.path.abspath(os.path.join(path, os.pardir)),settings.get("table_path"))			
+		for (dirname,dirs, files) in os.walk(table_path):					
+			for file in files:				
+				if file.lower().endswith("csv"):
+					listFiles.append(file)
+		return listFiles
 
 """
 { "keys": ["alt+shift+t"], "command": "insert_table"}

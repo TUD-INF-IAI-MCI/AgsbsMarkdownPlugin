@@ -37,19 +37,19 @@
                                 "platform": "OSX"
                                 },
 
-                                "caption": "Shortcuts",                                
+                                "caption": "Shortcuts"                                
                             },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbshelper.sublime-settings",                                
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbshelper.sublime-settings"                                
                                 },
-                                "caption": "Plugin konfigurieren",                                
+                                "caption": "Plugin konfigurieren"                                
                             },
                             {   "caption": "Tastenkürzel",
                                 "children":                                
                                 [
                                     {
-                                        "caption": "MATUC Behle",
+                                        "caption": "MATUC Befehle",
                                         "children": [
                                                 {                                                
                                                 "command": "create_structure",                                                
@@ -58,12 +58,12 @@
                                                 {                                                
                                                 "command": "check_with_mk",                                                
                                                 "caption": "Datei überprüfen",
-                                                "args":{"function": "checkFile"},
+                                                "args":{"function": "checkFile"}
                                                 },
                                                 {                                                
                                                 "command": "check_with_mk",                                                
                                                 "caption": "Alle Dateien überprüfen",
-                                                "args":{"function": "checkAll"},
+                                                "args":{"function": "checkAll"}
                                                 },
                                                 {                                                
                                                 "command": "create_html_file",                                                
