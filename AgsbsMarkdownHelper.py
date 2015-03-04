@@ -341,7 +341,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 		self.imagefiles = self.getFileName(self.imageFormats)
 		if self.imagefiles:				
 			if(settings.get("hints")):				
-				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 2 Eingaben erforderlich: \n"
+				messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 3 Eingaben erforderlich: \n"
 				"\t1. Speicherort des Bildes \n"
 				"\t2. Name des Bildes \n"
 				"\t3. Alternativbeschreibung zum Bild \n")
