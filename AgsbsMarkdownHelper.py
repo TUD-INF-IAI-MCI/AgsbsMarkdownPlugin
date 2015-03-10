@@ -20,12 +20,22 @@ if VERSION > 3000:
 	from .agsbs_infrastructure.MAGSBS import filesystem
 	from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
 	from .agsbs_infrastructure.MAGSBS import factories	
-	plugin_path = os.path.split(os.path.abspath(__file__))[0]
-	if not plugin_path in os.environ['PATH']:
-		if(sys.platform.lower().startswith("win")):		
-			os.environ['PATH'] +=";"+plugin_path+os.sep + "bin"					
+	#plugin_path = os.path.split(os.path.abspath(__file__))[0]
+	
+
+	if(sys.platform.lower().startswith("win")):	
+		user_paths = os.environ['PATH'].split(os.pathsep)
+		indices = [i for i, elem in enumerate(user_paths) if 'matuc' in elem]
+		if not indices:
+			sublime.error_message("Installieren Sie das Programm Matuc. Weitere Informationen\n finden Sie unter"
+			" http://elvis.inf.tu-dresden.de/wiki/index.php/Matuc ")
 		else:
-			os.environ['PATH'] +=":"+plugin_path+os.sep + "bin"			
+			newPath = user_paths[indices[0]] +os.sep+ "binary"
+			if not newPath in os.environ['PATH']:
+				os.environ['PATH'] +=";"+user_paths[indices[0]] +os.sep+ "binary"					
+	else:
+		print("ToDo")
+		#os.environ['PATH'] +=":"+plugin_path+os.sep + "bin"	
 else: 
 	sublime.error_message("sublime version  < 3; not supported")
 	
