@@ -1,0 +1,3 @@
+# Changes
+
+- fix problem within adding pandoc to path (see release st3-0.2.1.txt)
