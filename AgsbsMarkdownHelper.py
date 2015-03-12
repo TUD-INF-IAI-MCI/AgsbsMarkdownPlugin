@@ -28,7 +28,8 @@ if VERSION > 3000:
 		indices = [i for i, elem in enumerate(user_paths) if 'matuc' in elem]
 		if not indices:
 			sublime.error_message("Installieren Sie das Programm Matuc. Weitere Informationen\n finden Sie unter"
-			" http://elvis.inf.tu-dresden.de/wiki/index.php/Matuc ")
+			" http://elvis.inf.tu-dresden.de/wiki/index.php/Matuc.\n"
+			"Oder passen Sie die PATH-Angabe an, falls Sie das Programm Matuc installiert haben.")
 		else:
 			newPath = user_paths[indices[0]] +os.sep+ "binary"
 			if not newPath in os.environ['PATH']:
@@ -89,7 +90,7 @@ class Saver(): # ToDo: function
 					if v.is_dirty():										
 						if settings.get("autosave"):
 							v.run_command("save")							
-						else:			
+						else:										
 							sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
 													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
 							return
@@ -108,7 +109,7 @@ saver = Saver()
 
 class CreateStructureCommand(sublime_plugin.TextCommand):
 	"""
-{ "keys": ["F2"], "command": "create_structure", "args": {"tag": ""} }
+{ "keys": ["f2"], "command": "create_structure", "args": {"tag": ""} }
 	"""
 	def run(self,edit):
 		self.counter = 0
@@ -118,7 +119,14 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			'chapter_count': Bunch(name='Kapitel', value=''),
 			'language': Bunch(name='Sprache', value=''),
 			'preface': Bunch(name='Vorwort', value=''),
-		}	
+		}
+		if sublime.active_window().folders():
+			pass
+		else:
+			message = u"Sie müssen ein Projekt anlegen und einen Ordner auswählen,\n"
+			message += u"um die Buchstruktur anlegen zu können."
+			sublime.error_message(message)
+			return
 		if(settings.get("hints")):
 			messageBox.showMessageBox("Zum Anlegen der Struktur geben Sie bitte folgende Werte ein \n"
 				"\tTitel = Buch oder Lehrmaterial-Name\n"
@@ -140,13 +148,8 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 			self.input_done()
 
 	def input_done(self):
-		if sublime.active_window().folders():
-			path = sublime.active_window().folders()[0]
-		else:
-			message = u"Sie müssen ein Projekt anlegen und einen Ordner auswählen,\n"
-			message += u"um die Buchstruktur anlegen zu können."
-			sublime.error_message(message)
-			return
+		path = sublime.active_window().folders()[0]	
+		
 		cwd = os.getcwd()
 		os.chdir(path)		
 		builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
@@ -212,6 +215,7 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 		if function =="checkFile":
 			errors = mk.run(path)
 		elif function =="checkAll":
+			print("settings.get(autosave",settings.get("autosave"))
 			errors = mk.run(parent)			
 		if(len(errors) ==0):
 			console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
@@ -473,6 +477,9 @@ class InsertPageCommand(sublime_plugin.TextCommand):
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
 class ImportCsvTableCommand(sublime_plugin.TextCommand):
+	"""
+	{"keys":["ctrl+alt+t"],"command":"import_csv_table"},
+	"""
 	def run(self,edit):
 		csvfiles = self.getCsvFile()
 		self.show_prompt(csvfiles)		
