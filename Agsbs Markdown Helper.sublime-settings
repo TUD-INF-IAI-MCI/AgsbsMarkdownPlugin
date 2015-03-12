@@ -2,7 +2,7 @@
 	"debug": true,
 	"hints": true,
 	"table_default_values": true,
-	"autosave": true,
+	"autosave": true,	
 	"image_formats": [".jpg",".png",".svg"],
 	"autoload_html": true,
 	"table_path": "tabellen"
