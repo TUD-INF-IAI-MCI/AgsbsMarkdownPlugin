@@ -19,10 +19,8 @@ if VERSION > 3000:
 	from .agsbs_infrastructure.MAGSBS import pandoc
 	from .agsbs_infrastructure.MAGSBS import filesystem
 	from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
-	from .agsbs_infrastructure.MAGSBS import factories	
-	#plugin_path = os.path.split(os.path.abspath(__file__))[0]
+	from .agsbs_infrastructure.MAGSBS import factories		
 	
-
 	if(sys.platform.lower().startswith("win")):	
 		user_paths = os.environ['PATH'].split(os.pathsep)
 		indices = [i for i, elem in enumerate(user_paths) if 'matuc' in elem]
@@ -40,6 +38,11 @@ if VERSION > 3000:
 else: 
 	sublime.error_message("sublime version  < 3; not supported")
 	
+def plugin_loaded():
+	global settings		
+
+	settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')			
+	sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
@@ -81,6 +84,7 @@ class Bunch(object):
 
 class Saver(): # ToDo: function
 	def saveAllDirty(self):			
+		print("settings.get(autosave)",settings.get('autosave'))
 		for w in sublime.windows():
 			for v in w.views():
 				if not v.file_name():
@@ -214,8 +218,7 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 		errors = ""						
 		if function =="checkFile":
 			errors = mk.run(path)
-		elif function =="checkAll":
-			print("settings.get(autosave",settings.get("autosave"))
+		elif function =="checkAll":			
 			errors = mk.run(parent)			
 		if(len(errors) ==0):
 			console.printMessage(self.view,'Error',"Nun denn, ich konnte keine Fehler entdecken. Hoffen wir, dass es auch wirklich\nkeine gibt ;-).")
