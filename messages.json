@@ -2,5 +2,6 @@
 	"install": "messages/install.txt",
 	"st3-0.2.0": "messages/st3-0.2.0.txt",
 	"st3-0.2.1": "messages/st3-0.2.1.txt",
-	"st3-0.2.2": "messages/st3-0.2.2.txt"
+	"st3-0.2.2": "messages/st3-0.2.2.txt",
+	"st3-0.3.0": "messages/st3-0.3.0.txt"
 }
