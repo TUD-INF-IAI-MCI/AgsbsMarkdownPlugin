@@ -251,8 +251,9 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 		except OSError:
 			sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")    	
 			return    		    	
-		os.chdir(path)		
-		p = pandoc.pandoc()	
+		os.chdir(path)	
+		# just til gladtex is working well
+		p = pandoc.pandoc(use_gladtex = settings.get('use_gladtex'))	
 		try:	
 			p.convert(file_name)
 		except FileNotFoundError:
