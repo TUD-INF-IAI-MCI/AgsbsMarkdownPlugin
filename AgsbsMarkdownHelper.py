@@ -83,8 +83,7 @@ class Bunch(object):
         return self.__dict__ == other.__dict__
 
 class Saver(): # ToDo: function
-	def saveAllDirty(self):			
-		print("settings.get(autosave)",settings.get('autosave'))
+	def saveAllDirty(self):				
 		for w in sublime.windows():
 			for v in w.views():
 				if not v.file_name():
@@ -99,7 +98,6 @@ class Saver(): # ToDo: function
 													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
 							return
 						
-settings = sublime.load_settings("Agsbshelper.sublime-settings")
 global Debug
 Debug = settings.get("debug")	
 global autoload_html
@@ -259,7 +257,9 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 		except FileNotFoundError:
 			sublime.error_message("Sie müssen Pandoc installieren.")
 			return
+		print("autoload_html",autoload_html)			
 		if(autoload_html):			
+			print("open in browser",file_name.replace(".md",".html") )
 			Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
@@ -278,7 +278,8 @@ class CreateAllCommand(sublime_plugin.TextCommand):
 		m = master.Master(parent)
 		m.run()
 		if(autoload_html):
-			parent = os.path.join(parent,"inhalt.html")			
+			parent = os.path.join(parent,"inhalt.html")		
+			print("open in browser",parent )	
 			Browser(parent)
 
 
@@ -519,8 +520,7 @@ class ImportCsvTableCommand(sublime_plugin.TextCommand):
 		return listFiles
 
 	def CreateMarkdownFromCsv(self,csvFilename):
-		table_markdown = ""
-		print("self.table_path",self.table_path)
+		table_markdown = ""		
 		with open(csvFilename,newline="") as csvfile:
 			reader = csv.reader(csvfile, delimiter = " ")
 			for i,row in enumerate(reader):
