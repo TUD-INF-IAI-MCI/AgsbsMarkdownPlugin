@@ -481,35 +481,57 @@ class InsertPageCommand(sublime_plugin.TextCommand):
 		self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
 class ImportCsvTableCommand(sublime_plugin.TextCommand):
-	"""
-	{"keys":["ctrl+alt+t"],"command":"import_csv_table"},
-	"""
 	def run(self,edit):
-		csvfiles = self.getCsvFile()
-		self.show_prompt(csvfiles)		
+		self.csvfiles = self.getCsvFile()
+		if self.csvfiles:				
+			if(settings.get("hints")):				
+				messageBox.showMessageBox("Sie wollen eine Tabelle aus einer CSV-Datei hinzufügen. \n"
+				"Wählen Sie im folgenden Dialog die entsprechende Datei aus.")
+			self.show_prompt(self.csvfiles)
+		else:
+			dirname = os.path.dirname(self.view.file_name())
+			dirname = os.path.join(dirname,settings.get("table_path"))
+			message = "Im Ordner \""+ settings.get("table_path")+"\" sind keine csv-Dateien gespeichert.\n"
+			message += "Speichern zuerst CSV-Dateien in dem Ordner\n"
+			message += dirname +"!"
+			sublime.error_message(message)
+			return		
 	def show_prompt(self, listFile):
-		print("listFile", listFile)	
 		self.view.window().show_quick_panel(listFile,self.on_done,sublime.MONOSPACE_FONT)		
 
 	def on_done(self,input):
 		if input == -1:
-			print("FUCK -1")
-		elif input != -1:
-			print("INPUT",input)			
+			pass
+		elif input != -1:			
+			self.CreateMarkdownFromCsv(os.path.join(self.table_path,self.csvfiles[input]))
 
 	def getCsvFile(self):
 		listFiles = []		
 		filename = self.view.file_name()
-		table_path = ""
+		self.table_path = ""
 		if  filename is not None:
-			dir = os.path.dirname(filename)
 			path = os.path.dirname(self.view.window().active_view().file_name())
-			table_path = os.path.join(os.path.abspath(os.path.join(path, os.pardir)),settings.get("table_path"))			
-		for (dirname,dirs, files) in os.walk(table_path):					
+			self.table_path = os.path.join(path,settings.get("table_path"))			
+		for (dirname,dirs, files) in os.walk(self.table_path):					
 			for file in files:				
 				if file.lower().endswith("csv"):
 					listFiles.append(file)
 		return listFiles
+
+	def CreateMarkdownFromCsv(self,csvFilename):
+		table_markdown = ""
+		print("self.table_path",self.table_path)
+		with open(csvFilename,newline="") as csvfile:
+			reader = csv.reader(csvfile, delimiter = " ")
+			for i,row in enumerate(reader):
+				content = "".join(row)
+				if i == 1:
+					# e.g. if there are 2 row_delimiter than there are 3 columns 
+					# also 4 pipes '|'
+					columns = content.count(settings.get("row_delimiter"))+ 1
+					table_markdown += columns*'| -----------'+'|\n'				
+				table_markdown += "|" + "".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"
+		self.view.run_command("insert_my_text", {"args":{'text': table_markdown}})
 
 """
 { "keys": ["alt+shift+t"], "command": "insert_table"}
