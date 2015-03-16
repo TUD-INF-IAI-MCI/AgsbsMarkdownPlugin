@@ -1,1 +1,8 @@
-Installation was successful. You can report bug and other issues at https://github.com/TUD-INF-IAI-MCI/AgsbsMarkdownPlugin/issues.
+# Installation of AGSBS Markdown Helper is finished
+
+
+Installation was successful. You can report bug and other issues at 
+https://github.com/TUD-INF-IAI-MCI/AgsbsMarkdownPlugin/issues.
+
+For more information visit https://github.com/TUD-INF-IAI-MCI/AgsbsMarkdownPlugin.
+The latest release is shown here, https://github.com/TUD-INF-IAI-MCI/AgsbsMarkdownPlugin/releases.

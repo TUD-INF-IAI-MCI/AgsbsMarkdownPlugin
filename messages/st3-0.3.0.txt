@@ -1,0 +1,17 @@
+# Changes
+
+- add setting use_gladtex, default value is false
+- just for avoiding gladtex errors during the generation of HTML
+- changes in warning message is matuc is not install 
+- remove comma in sublime-keymap	
+- rename sublime-settings	
+- changes for user sublime-settings …
+- changes in main menu
+- file for user settings is now create 
+- user can customize the sublime-settings now
+
+
+## New Feature
+
+- import of csv-file and convert to markdown
+- in Agsbs Markdown Helper.sublime-settings the location of the saved csv-files is defined
