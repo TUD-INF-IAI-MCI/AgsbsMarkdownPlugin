@@ -5,7 +5,7 @@
 mistake."""
 
 import re, textwrap
-import enum
+from ...lib import enum
 from abc import ABCMeta, abstractmethod
 from .. import datastructures
 
