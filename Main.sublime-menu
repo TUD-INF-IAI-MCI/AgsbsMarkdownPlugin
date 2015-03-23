@@ -17,6 +17,19 @@
                         [
                             {
                                 "command": "open_file", 
+                                "args": {"file": "${packages}/User/Agsbs Markdown Helper.sublime-settings"                                
+                                },
+                                "caption": "Setting - User"                                
+                            },
+                            {
+                                "command": "open_file", 
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"                                
+                                },
+                                "caption": "Setting - Default"                                
+                            },                            
+                            { "caption": "-" },
+                            {
+                                "command": "open_file", 
                                 "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Linux).sublime-keymap",
                                 "platform": "Linux"
                                 },
@@ -38,19 +51,7 @@
                                 },
 
                                 "caption": "Shortcuts"                                
-                            },
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"                                
-                                },
-                                "caption": "Setting - Default"                                
-                            },
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/User/Agsbs Markdown Helper.sublime-settings"                                
-                                },
-                                "caption": "Setting - User"                                
-                            },
+                            },                            
                             {   "caption": "Tastenkürzel",
                                 "children":                                
                                 [

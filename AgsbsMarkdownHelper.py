@@ -43,6 +43,16 @@ def plugin_loaded():
 
 	settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')			
 	sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
+	global Debug
+	Debug = settings.get("debug")	
+	global autoload_html
+	autoload_html = settings.get("autoload_html")
+	global messageBox
+	messageBox = MessageBox()
+	global console
+	console = Console()
+	global saver
+	saver = Saver()
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
@@ -98,16 +108,7 @@ class Saver(): # ToDo: function
 													 "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
 							return
 						
-global Debug
-Debug = settings.get("debug")	
-global autoload_html
-autoload_html = settings.get("autoload_html")
-global messageBox
-messageBox = MessageBox()
-global console
-console = Console()
-global saver
-saver = Saver()
+
 
 class CreateStructureCommand(sublime_plugin.TextCommand):
 	"""
@@ -256,8 +257,7 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
 			p.convert(file_name)
 		except FileNotFoundError:
 			sublime.error_message("Sie müssen Pandoc installieren.")
-			return
-		print("autoload_html",autoload_html)			
+			return		
 		if(autoload_html):			
 			print("open in browser",file_name.replace(".md",".html") )
 			Browser(file_name.replace(".md",".html"))
