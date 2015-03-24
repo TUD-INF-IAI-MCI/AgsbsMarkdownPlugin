@@ -11,7 +11,7 @@
     { "keys": ["alt+shift+t"], "command": "insert_table"},
     { "keys": ["alt+shift+l"], "command": "insert_link_panel"},    
     { "keys": ["alt+shift+p"], "command": "insert_page"},    
-    {"keys":["ctrl+alt+t"],"command":"import_csv_table"},
+    {"keys":["ctrl+shift+t"],"command":"import_csv_table"},
     { "keys": ["ctrl+alt+i"], "command": "insert_image_panel"},
     { "keys": ["f2"], "command": "create_structure"},
     { "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} },
