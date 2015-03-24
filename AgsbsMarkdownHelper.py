@@ -5,7 +5,8 @@ import os
 import re
 import codecs, re, sys
 import collections
-import webbrowser 
+import webbrowser
+import csv
 
 VERSION = int(sublime.version())
 
