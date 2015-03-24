@@ -3,6 +3,8 @@ Agsbs Markdown Helper
 
 **This plugin is in a developing state, not stable**
 
+Latest Release for Sublime Text 3 is st3-0.3.1
+
 This is a sublime plugin which is used in our working group. Our working group is transcribing study materials
 for blind and visual impaired students ([Elvis - german Website](http://elvis.inf.tu-dresden.de)).
 
