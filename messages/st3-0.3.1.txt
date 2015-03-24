@@ -1,4 +1,4 @@
-# Changes in st3-0.3.1.txt
+# Changes in st3-0.3.1
 
 - add missing import for csv
 - add initialisation of settings to method plugin loaded
