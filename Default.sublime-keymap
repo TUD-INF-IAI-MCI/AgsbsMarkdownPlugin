@@ -11,6 +11,7 @@
     { "keys": ["alt+shift+a"], "command": "insert_panel", "args": {"tag": "a name"} },
     { "keys": ["alt+shift+t"], "command": "insert_table"},
     { "keys": ["alt+shift+l"], "command": "insert_link_panel"},
+    { "keys": ["ctrl+shift+l"], "command": "create_internal_link"},
     { "keys": ["alt+shift+p"], "command": "insert_page"},
     {"keys":["ctrl+shift+t"],"command":"import_csv_table"},
     { "keys": ["ctrl+alt+i"], "command": "insert_image_panel"},

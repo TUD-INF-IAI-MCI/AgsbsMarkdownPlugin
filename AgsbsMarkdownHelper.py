@@ -100,15 +100,59 @@ class Saver(): # ToDo: function
                 elif v.file_name().endswith(".md"):
                     if v.is_dirty():                                        
                         if settings.get("autosave"):
-                            v.run_command("save")                           
-                        else:                                       
+                            v.run_command("save")
+                        else:
                             sublime.error_message("Es gibt ungespeicherte md-Dateien. Daher kann könnten die generierten Dateien\n"
                                                      "Fehler enthalten. Aktivieren Sie autosave in der Konfigurationsdatei")
                             return
-                        
+
+class CreateInternalLink(sublime_plugin.TextCommand):
+    """
+    { "keys": ["crtl+shift+l"], "command": "create_internal_link"}
+    """
+    def run(self,edit):
+        self.linkDic = {}
+        file_name = self.view.window().active_view().file_name()
+        if file_name and file_name.lower().endswith(".md"):
+            saver.saveAllDirty()
+            path = os.path.dirname(file_name)
+            parent = os.path.abspath(os.path.join(path, os.pardir))
+            for root, dirs, files in os.walk(str(parent)):
+                for file in files:
+                    if file.endswith(".md"):
+                            with open(os.path.join(root,file)) as md_file:
+                                reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
+                                content = md_file.read()
+                                #print(content)                                
+                                headings = re.findall("[#]{1,6}[ \d\w.-]+",content)
+                                if headings:
+                                    self.linkDic[file] = headings
+            self.show_link_quick_panel(self.linkDic)
+
+        else:
+            sublime.error_message("Selektieren Sie eine Markdown-Datei um einen \ninternen Link einzufügen.")
+
+    def show_link_quick_panel(self, linkDic):
+        print("linkDic", linkDic)
+        print("createLinkList", self.createLinkList(linkDic))
+        self.view.window().show_quick_panel(self.createLinkList(linkDic),self.on_done,sublime.MONOSPACE_FONT)
+
+    def createLinkList(self, linkDic):
+        arrResult = []
+
+        for entry in linkDic:
+            for listEntry in linkDic[entry]:
+                arrResult.append(entry + " - " + listEntry.replace('#',""))
+        return arrResult
+
+    def on_done(self, input):
+        print("selected", input)
 
 class AddFolderToProject(sublime_plugin.TextCommand):
-    def run(self,edit):
+    """
+    { "keys": ["shift+f2"], "command": "add_folder_to_project"}
+    """
+    def run(self, edit):
         sublime.active_window().run_command('prompt_add_folder')
 
 
@@ -298,11 +342,10 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
         self.counter = 0
         self.keys = ['url', 'linktext']
         #create Dictionary
-        self.dictionary ={
+        self.dictionary = {
             'url': Bunch(name='URL', value=''),
             'linktext': Bunch(name='Linktext', value=''),
-            
-        }       
+        }
         if(settings.get("hints")):
                 messageBox.showMessageBox("Sie wollen ein Link hinzufügen. Es sind 2 Eingaben erforderlich: \n"
                     "\t1. URL, http://www.tu-dresden.de  \n"
