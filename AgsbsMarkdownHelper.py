@@ -490,8 +490,7 @@ class InsertPageCommand(sublime_plugin.TextCommand):
 
 class ImportCsvTableCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-        self.csvfiles = self.getCsvFile()
-        print(self.view.file_name())
+        self.csvfiles = self.getCsvFile()    
         if self.csvfiles and self.view.file_name().endswith("md"):
             if(settings.get("hints")):              
                 messageBox.showMessageBox("Sie wollen eine Tabelle aus einer CSV-Datei hinzufügen. \n"
@@ -592,11 +591,11 @@ class InsertTableCommand(sublime_plugin.TextCommand):
                     markdown += "----------|"
             # add separator
             markdown += "\n" # line break for next row
-        markdown += "\n" # final line break     
+        markdown += "\n" # final line break
         if(Debug):
             message = "Table with \n\t %d columns\n\t %d rows \n" % (cols, rows)
             message += "Generated markdown is \n" +markdown
-            console.printMessage(self.view, "Debug", message)       
+            console.printMessage(self.view, "Debug", message)
         # insert markdown
         self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
@@ -607,34 +606,39 @@ class AddTagCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
 { "keys": ["alt+shift+f"], "command": "add_tag", "args": {"tag": "formula", "markdown_str":"$$"}}
     """
-    def run(self, edit, tag, markdown_str):     
-        screenful = self.view.visible_region()      
-        (row,col) = self.view.rowcol(self.view.sel()[0].begin())        
+    def run(self, edit, tag, markdown_str):
+        screenful = self.view.visible_region()
+        (row,col) = self.view.rowcol(self.view.sel()[0].begin())
         target = self.view.text_point(row, 0)
-        # strong and em
+        if not self.view.file_name().endswith("md"):
+            return
         if tag in ['em', 'strong','formula']:
             (row,col) = self.view.rowcol(self.view.sel()[0].begin())
             for region in self.view.sel():
                 if not region.empty():
+                    cursorPos = self.view.sel()
                     selString = self.view.substr(region)
                     word = self.view.word(target)
-                    movecursor = len(word)   
+                    movecursor = len(word)
                     diff = 0
                     if movecursor > 0:
-                        diff = movecursor/2        
+                        diff = movecursor/2
                         strg = str(diff)
-                        target = self.view.text_point(row, diff)                                                
+                        target = self.view.text_point(row, diff)
                     if region.a < region.b:
                         firstPos =  region.a
                         endPos = region.b
                     else:
                         firstPos =  region.b
                         endPos = region.a
-                    endPos += len(markdown_str) 
-                    
+                    endPos += len(markdown_str)
+
                     self.view.sel().clear()
-                    self.view.insert(edit,firstPos,markdown_str)
-                    self.view.insert(edit,endPos,markdown_str)
+                    if not selString.startswith(markdown_str):
+                        self.view.insert(edit,firstPos,markdown_str)
+                        self.view.insert(edit,endPos,markdown_str)
+                    self.view.sel().add(sublime.Region(cursorPos))
+
         #heading
         elif tag in ['h']:
             for region in self.view.sel():
