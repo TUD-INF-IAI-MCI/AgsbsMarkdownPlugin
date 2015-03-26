@@ -1,0 +1,10 @@
+## Change in st3-0.3.3
+
+- add formatting for formula , default shortcut is ALT + SHIFT + F
+
+## Fixes
+
+- testing before string is formatted if string is formatted with this style
+- testing before csv-import if selected file is md-file
+- testing before string is formatted if selected file is md-file
+
