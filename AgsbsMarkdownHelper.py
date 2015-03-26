@@ -605,13 +605,14 @@ class AddTagCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+h"], "command": "add_tag", "args": {"tag": "h", "markdown_str":"#"} }
 { "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} }
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
+{ "keys": ["alt+shift+f"], "command": "add_tag", "args": {"tag": "formula", "markdown_str":"$$"}}
     """
     def run(self, edit, tag, markdown_str):     
         screenful = self.view.visible_region()      
         (row,col) = self.view.rowcol(self.view.sel()[0].begin())        
         target = self.view.text_point(row, 0)
         # strong and em
-        if tag in ['em', 'strong']:
+        if tag in ['em', 'strong','formula']:
             (row,col) = self.view.rowcol(self.view.sel()[0].begin())
             for region in self.view.sel():
                 if not region.empty():
