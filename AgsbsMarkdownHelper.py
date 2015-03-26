@@ -113,40 +113,46 @@ class CreateInternalLink(sublime_plugin.TextCommand):
     def run(self,edit):
         self.linkDic = {}
         file_name = self.view.window().active_view().file_name()
+        
         if file_name and file_name.lower().endswith(".md"):
-            saver.saveAllDirty()
+            saver.saveAllDirty()      
             path = os.path.dirname(file_name)
             parent = os.path.abspath(os.path.join(path, os.pardir))
             for root, dirs, files in os.walk(str(parent)):
                 for file in files:
                     if file.endswith(".md"):
                             with open(os.path.join(root,file)) as md_file:
-                                reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
+                                # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
                                 content = md_file.read()
-                                #print(content)                                
-                                headings = re.findall("[#]{1,6}[ \d\w.-]+",content)
-                                if headings:
-                                    self.linkDic[file] = headings
+                                headings = re.findall("[\w\d ]+\n[=]+|[#]{1,6}[\w\d ]+\n",content)
+                                if headings:                                    
+                                    parent = os.path.split(os.path.dirname(md_file.name))[1]
+
+                                    self.linkDic[parent+'\\'+file] = headings
             self.show_link_quick_panel(self.linkDic)
 
         else:
             sublime.error_message("Selektieren Sie eine Markdown-Datei um einen \ninternen Link einzufügen.")
 
     def show_link_quick_panel(self, linkDic):
-        print("linkDic", linkDic)
-        print("createLinkList", self.createLinkList(linkDic))
         self.view.window().show_quick_panel(self.createLinkList(linkDic),self.on_done,sublime.MONOSPACE_FONT)
 
     def createLinkList(self, linkDic):
-        arrResult = []
-
+        self.linkList = []
         for entry in linkDic:
             for listEntry in linkDic[entry]:
-                arrResult.append(entry + " - " + listEntry.replace('#',""))
-        return arrResult
+                headingStr = re.sub(r'[#]{1,6}|[=]+',r'',''.join(listEntry))
+                headingStr = re.sub(r'^\s+',r'',headingStr)  # trailing white space
+                self.linkList.append(entry + "|" + headingStr)
+        return self.linkList
 
     def on_done(self, input):
-        print("selected", input)
+        print("selected", self.linkList[input])
+        values = self.linkList[input].split('|')
+        markdown = "[%s](%s)" % (values[1].replace('\n',''),"..\\"+values[0].lower().replace(".md",".html") + "#" + values[1].lower().replace(' ','-').replace("\n",''))
+        self.view.run_command("insert_my_text", {"args":{'text': markdown}})
+
+
 
 class AddFolderToProject(sublime_plugin.TextCommand):
     """
@@ -648,6 +654,8 @@ class AddTagCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} }
 { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"}}
 { "keys": ["alt+shift+f"], "command": "add_tag", "args": {"tag": "formula", "markdown_str":"$$"}}
+{ "keys": ["alt+shift+u"], "command": "add_tag", "args": {"tag": "ul", "markdown_str":"- "} },
+{ "keys": ["alt+shift+o"], "command": "add_tag", "args": {"tag": "ol", "markdown_str":"1. "} },
     """
     def run(self, edit, tag, markdown_str):
         screenful = self.view.visible_region()
@@ -705,6 +713,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
      
+
 
 
 
