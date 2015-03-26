@@ -25,33 +25,16 @@
                                 "command": "open_file", 
                                 "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"                                
                                 },
-                                "caption": "Setting - Default"                                
-                            },                            
+                                "caption": "Setting - Default"
+                            },
                             { "caption": "-" },
                             {
                                 "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Linux).sublime-keymap",
-                                "platform": "Linux"
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default.sublime-keymap",
                                 },
 
                                 "caption": "Shortcuts"
                             },
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (Windows).sublime-keymap",
-                                "platform": "Windows"
-                                },
-
-                                "caption": "Shortcuts"
-                            },
-                            {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default (OSX).sublime-keymap",
-                                "platform": "OSX"
-                                },
-
-                                "caption": "Shortcuts"                                
-                            },                            
                             {   "caption": "Tastenkürzel",
                                 "children":                                
                                 [
