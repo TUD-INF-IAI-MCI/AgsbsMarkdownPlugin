@@ -76,8 +76,16 @@
                                                 "caption": "Link hinzufügen"
                                             },
                                             {
+                                                "command": "create_internal_link",                                                
+                                                "caption": "Internen Link hinzufügen"
+                                            },
+                                            {
                                                 "command": "insert_table",                                                
                                                 "caption": "Tabelle hinzufügen"
+                                            },
+                                            {
+                                                "command": "import_csv_table",                                                
+                                                "caption": "CSV-Tabelle importieren"
                                             },
                                             {
                                                 "command": "insert_page",                                                
@@ -106,12 +114,12 @@
                                             },
                                             {
                                                 "command" : "add_tag",
-                                                "args": {"tag": "ol", "markdown_str": "1."},
+                                                "args": {"tag": "ol", "markdown_str": "1. "},
                                                 "caption": "nummerierte Liste"
                                             },
                                             {
                                                 "command" : "add_tag",
-                                                "args": {"tag": "ul", "markdown_str": "-"},
+                                                "args": {"tag": "ul", "markdown_str": "- "},
                                                 "caption": "unnummerierte Liste"
                                             },
                                             {
