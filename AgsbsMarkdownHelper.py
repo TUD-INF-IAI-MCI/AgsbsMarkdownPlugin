@@ -107,6 +107,10 @@ class Saver(): # ToDo: function
                             return
                         
 
+class AddFolderToProject(sublime_plugin.TextCommand):
+    def run(self,edit):
+        sublime.active_window().run_command('prompt_add_folder')
+
 
 class CreateStructureCommand(sublime_plugin.TextCommand):
     """

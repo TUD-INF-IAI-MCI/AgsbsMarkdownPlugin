@@ -13,6 +13,7 @@
     { "keys": ["alt+shift+p"], "command": "insert_page"},
     {"keys":["ctrl+shift+t"],"command":"import_csv_table"},
     { "keys": ["ctrl+alt+i"], "command": "insert_image_panel"},
+    { "keys": ["shift+f2"], "command": "add_folder_to_project"},
     { "keys": ["f2"], "command": "create_structure"},
     { "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} },
     { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} },
