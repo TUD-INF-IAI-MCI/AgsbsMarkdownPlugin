@@ -491,19 +491,25 @@ class InsertPageCommand(sublime_plugin.TextCommand):
 class ImportCsvTableCommand(sublime_plugin.TextCommand):
     def run(self,edit):
         self.csvfiles = self.getCsvFile()
-        if self.csvfiles:               
+        print(self.view.file_name())
+        if self.csvfiles and self.view.file_name().endswith("md"):
             if(settings.get("hints")):              
                 messageBox.showMessageBox("Sie wollen eine Tabelle aus einer CSV-Datei hinzufügen. \n"
                 "Wählen Sie im folgenden Dialog die entsprechende Datei aus.")
             self.show_prompt(self.csvfiles)
-        else:
+        elif self.view.file_name().endswith("md"):
             dirname = os.path.dirname(self.view.file_name())
             dirname = os.path.join(dirname,settings.get("table_path"))
-            message = "Im Ordner \""+ settings.get("table_path")+"\" sind keine csv-Dateien gespeichert.\n"
+            message = "Im Ordner \"" + settings.get("table_path")+"\" sind keine csv-Dateien gespeichert.\n"
             message += "Speichern zuerst CSV-Dateien in dem Ordner\n"
             message += dirname +"!"
             sublime.error_message(message)
-            return      
+            return
+        else:
+            message = "Sie müssen eine Markdown-Datei(*.md) öffnen um,\n"
+            message += "um eine Tabelle importieren zu können."
+            sublime.error_message(message)
+            return
     def show_prompt(self, listFile):
         self.view.window().show_quick_panel(listFile,self.on_done,sublime.MONOSPACE_FONT)       
 
