@@ -124,8 +124,8 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                             with open(os.path.join(root,file)) as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
                                 content = md_file.read()
-                                headings = re.findall("[\w\d ]+\n[=]+|[#]{1,6}[\w\d ]+\n",content)
-                                if headings:                                    
+                                headings = re.findall('[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n',content)
+                                if headings:
                                     parent = os.path.split(os.path.dirname(md_file.name))[1]
 
                                     self.linkDic[parent+'\\'+file] = headings
