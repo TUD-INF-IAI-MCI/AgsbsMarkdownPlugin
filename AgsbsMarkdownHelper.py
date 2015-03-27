@@ -1,12 +1,14 @@
 from __future__ import print_function
-import sublime, sublime_plugin
+import sublime
+import sublime_plugin
 import sys
 import os
 import re
-import codecs, re, sys
+import codecs
 import collections
 import webbrowser
 import csv
+
 
 VERSION = int(sublime.version())
 
@@ -20,7 +22,7 @@ if VERSION > 3000:
     from .agsbs_infrastructure.MAGSBS import pandoc
     from .agsbs_infrastructure.MAGSBS import filesystem
     from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
-    from .agsbs_infrastructure.MAGSBS import factories      
+    from .agsbs_infrastructure.MAGSBS import factories
     
     if(sys.platform.lower().startswith("win")): 
         user_paths = os.environ['PATH'].split(os.pathsep)
@@ -32,14 +34,14 @@ if VERSION > 3000:
         else:
             newPath = user_paths[indices[0]] +os.sep+ "binary"
             if not newPath in os.environ['PATH']:
-                os.environ['PATH'] +=";"+user_paths[indices[0]] +os.sep+ "binary"                               
+                os.environ['PATH'] +=";"+user_paths[indices[0]] +os.sep+ "binary"
 else: 
     sublime.error_message("sublime version  < 3; not supported")
     
 def plugin_loaded():
     global settings     
 
-    settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')          
+    settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')
     sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
     global Debug
     Debug = settings.get("debug")   
@@ -112,8 +114,7 @@ class CreateInternalLink(sublime_plugin.TextCommand):
     """
     def run(self,edit):
         self.linkDic = {}
-        file_name = self.view.window().active_view().file_name()
-        
+        file_name = self.view.window().active_view().file_name()        
         if file_name and file_name.lower().endswith(".md"):
             saver.saveAllDirty()      
             path = os.path.dirname(file_name)
@@ -123,6 +124,7 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                     if file.endswith(".md"):
                             with open(os.path.join(root,file)) as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
+                                print(file)
                                 content = md_file.read()
                                 headings = re.findall('[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n',content)
                                 if headings:
@@ -135,6 +137,7 @@ class CreateInternalLink(sublime_plugin.TextCommand):
             sublime.error_message("Selektieren Sie eine Markdown-Datei um einen \ninternen Link einzufügen.")
 
     def show_link_quick_panel(self, linkDic):
+        print(type(linkDic))
         self.view.window().show_quick_panel(self.createLinkList(linkDic),self.on_done,sublime.MONOSPACE_FONT)
 
     def createLinkList(self, linkDic):
@@ -144,14 +147,15 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                 headingStr = re.sub(r'[#]{1,6}|[=]+',r'',''.join(listEntry))
                 headingStr = re.sub(r'^\s+',r'',headingStr)  # trailing white space
                 self.linkList.append(entry + "|" + headingStr)
+        self.linkList.sort()
         return self.linkList
 
     def on_done(self, input):
-        print("selected", self.linkList[input])
-        values = self.linkList[input].split('|')
-        markdown = "[%s](%s)" % (values[1].replace('\n',''),"..\\"+values[0].lower().replace(".md",".html") + "#" + values[1].lower().replace(' ','-').replace("\n",''))
-        self.view.run_command("insert_my_text", {"args":{'text': markdown}})
-
+        if input != -1:     # -1 = esc
+            values = self.linkList[input].split('|')
+            markdown = "[%s](%s)" % (values[1].replace('\n',''),"..\\"+values[0].lower().replace(".md",".html") + "#" + values[1].lower().replace(' ','-').replace("\n",''))
+            self.view.run_command("insert_my_text", {"args":{'text': markdown}})
+        print("list - len ", len(self.linkList))
 
 
 class AddFolderToProject(sublime_plugin.TextCommand):
@@ -656,6 +660,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
 { "keys": ["alt+shift+f"], "command": "add_tag", "args": {"tag": "formula", "markdown_str":"$$"}}
 { "keys": ["alt+shift+u"], "command": "add_tag", "args": {"tag": "ul", "markdown_str":"- "} },
 { "keys": ["alt+shift+o"], "command": "add_tag", "args": {"tag": "ol", "markdown_str":"1. "} },
+{ "keys": ["alt+shift+s"], "command": "add_tag", "args": {"tag": "strong+em", "markdown_str":"***"} },
     """
     def run(self, edit, tag, markdown_str):
         screenful = self.view.visible_region()
@@ -663,7 +668,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
         target = self.view.text_point(row, 0)
         if not self.view.file_name().endswith("md"):
             return
-        if tag in ['em', 'strong','formula']:
+        if tag in ['em', 'strong','formula','strong+em']:
             (row,col) = self.view.rowcol(self.view.sel()[0].begin())
             for region in self.view.sel():
                 if not region.empty():

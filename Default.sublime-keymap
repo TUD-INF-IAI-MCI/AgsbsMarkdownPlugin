@@ -3,6 +3,7 @@
     { "keys": ["alt+shift+i"], "command": "add_tag", "args": {"tag": "em", "markdown_str":"_"} },
     { "keys": ["alt+shift+r"], "command": "add_tag", "args": {"tag": "hr", "markdown_str":"----------"} },
     { "keys": ["alt+shift+s"], "command": "add_tag", "args": {"tag": "strong", "markdown_str":"**"} },
+    { "keys": ["alt+shift+v"], "command": "add_tag", "args": {"tag": "strong+em", "markdown_str":"***"} },
     { "keys": ["alt+shift+f"], "command": "add_tag", "args": {"tag": "formula", "markdown_str":"$$"} },
     { "keys": ["alt+shift+u"], "command": "add_tag", "args": {"tag": "ul", "markdown_str":"- "} },
     { "keys": ["alt+shift+o"], "command": "add_tag", "args": {"tag": "ol", "markdown_str":"1. "} },
