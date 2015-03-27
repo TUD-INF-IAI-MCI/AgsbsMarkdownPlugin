@@ -1,0 +1,12 @@
+# Changes in st3-0.4.0
+
+## New Functions
+
+- insert internal links to heading of parent document via selection menu
+- formatting functions for:
+	- inline formula
+	- strong and emphasize text
+
+
+
+
