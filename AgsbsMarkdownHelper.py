@@ -114,9 +114,9 @@ class CreateInternalLink(sublime_plugin.TextCommand):
     """
     def run(self,edit):
         self.linkDic = {}
-        file_name = self.view.window().active_view().file_name()        
+        file_name = self.view.window().active_view().file_name()
         if file_name and file_name.lower().endswith(".md"):
-            saver.saveAllDirty()      
+            saver.saveAllDirty()
             path = os.path.dirname(file_name)
             parent = os.path.abspath(os.path.join(path, os.pardir))
             for root, dirs, files in os.walk(str(parent)):
@@ -124,28 +124,25 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                     if file.endswith(".md"):
                             with open(os.path.join(root,file)) as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
-                                print(file)
                                 content = md_file.read()
                                 headings = re.findall('[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n',content)
                                 if headings:
                                     parent = os.path.split(os.path.dirname(md_file.name))[1]
-
-                                    self.linkDic[parent+'\\'+file] = headings
+                                    self.linkDic[parent+'/'+file] = headings
             self.show_link_quick_panel(self.linkDic)
 
         else:
             sublime.error_message("Selektieren Sie eine Markdown-Datei um einen \ninternen Link einzufügen.")
 
     def show_link_quick_panel(self, linkDic):
-        print(type(linkDic))
-        self.view.window().show_quick_panel(self.createLinkList(linkDic),self.on_done,sublime.MONOSPACE_FONT)
+        self.view.window().show_quick_panel(self.createLinkList(linkDic), self.on_done, sublime.MONOSPACE_FONT)
 
     def createLinkList(self, linkDic):
         self.linkList = []
         for entry in linkDic:
             for listEntry in linkDic[entry]:
-                headingStr = re.sub(r'[#]{1,6}|[=]+',r'',''.join(listEntry))
-                headingStr = re.sub(r'^\s+',r'',headingStr)  # trailing white space
+                headingStr = re.sub(r'[#]{1,6}|[=]+', r'', ''.join(listEntry))
+                headingStr = re.sub(r'^\s+', r'', headingStr)  # trailing white space
                 self.linkList.append(entry + "|" + headingStr)
         self.linkList.sort()
         return self.linkList
@@ -153,9 +150,9 @@ class CreateInternalLink(sublime_plugin.TextCommand):
     def on_done(self, input):
         if input != -1:     # -1 = esc
             values = self.linkList[input].split('|')
-            markdown = "[%s](%s)" % (values[1].replace('\n',''),"..\\"+values[0].lower().replace(".md",".html") + "#" + values[1].lower().replace(' ','-').replace("\n",''))
-            self.view.run_command("insert_my_text", {"args":{'text': markdown}})
-        print("list - len ", len(self.linkList))
+        
+            markdown = "[%s](%s)" % (values[1].replace('\n', ''), "../" + values[0].lower().replace(".md", ".html") + "#" + values[1].lower().replace(' ', '-').replace("\n", ''))
+            self.view.run_command("insert_my_text", {"args": {'text': markdown}})
 
 
 class AddFolderToProject(sublime_plugin.TextCommand):
@@ -172,7 +169,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
     """
     def run(self,edit):
         self.counter = 0
-        self.keys = ['title', 'chapter_count','language','preface']
+        self.keys = ['title', 'chapter_count', 'language', 'preface']
         self.dictionary ={
             'title': Bunch(name='Titel', value=''),
             'chapter_count': Bunch(name='Kapitel', value=''),
@@ -191,7 +188,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
                 "\tTitel = Buch oder Lehrmaterial-Name\n"
                 "\tKapitelanzahl = erlaubte Werte sind ganze Zahlen\n"
                 "\tSprache = erlaubte Werte sind de oder en \n"
-                "\tVorwort = erlaubte Werte sind ja oder nein")     
+                "\tVorwort = erlaubte Werte sind ja oder nein")
         self.show_prompt()
     def show_prompt(self):
         self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
@@ -207,17 +204,17 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
             self.input_done()
 
     def input_done(self):
-        path = sublime.active_window().folders()[0] 
-        
+        path = sublime.active_window().folders()[0]
+
         cwd = os.getcwd()
-        os.chdir(path)      
+        os.chdir(path)
         builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
                 lang=self.dictionary['language'].value)
         builder.set_has_preface(self.dictionary['preface'].value)
         builder.generate_structure()
         if(Debug):
             console = Console()
-            console.printMessage(self.view,'Debug',path)    
+            console.printMessage(self.view,'Debug',path)
         os.chdir(cwd)
     def check_user_input(self, key, content):
         error = False
@@ -229,24 +226,24 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
                 error =  False
             except ValueError:
                 error =  True
-                messageBox.showMessageBox("Kapitelanzahl muss eine Zahl sein!")                                             
-        elif key == 'language': 
-            if not content in ['de','en']:  
+                messageBox.showMessageBox("Kapitelanzahl muss eine Zahl sein!")
+        elif key == 'language':
+            if not content in ['de','en']:
                 error =  True
-                messageBox.showMessageBox("Zulässige Werte für die Sprache sind nur \"de\" und \"en\"")         
-        elif key == 'preface':  
+                messageBox.showMessageBox("Zulässige Werte für die Sprache sind nur \"de\" und \"en\"")
+        elif key == 'preface':
             if not content in ['ja','nein']:
                 messageBox.showMessageBox("Zulässige Werte für das Vorwort sind nur \"ja\" und \"nein\"")
                 error =  True
-            else:           
+            else:
                 content = True if content.lower() in "ja" else False
-        if not error:                   
-            return content          
-        else: 
+        if not error:
+            return content
+        else:
             self.counter = self.keys.index(key)
-            return None     
+            return None
 
-    def on_cancel(self, input):     
+    def on_cancel(self, input):
         if input == -1:
             return
 
@@ -255,35 +252,35 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 { "keys": ["f3"], "command": "check_with_mk" , "args": {"function": "checkFile"} }
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
     """
-    def run(self, edit, function): 
+    def run(self, edit, function):
         saver.saveAllDirty()
         try:
             file_name = self.view.window().active_view().file_name()
             if not file_name:
-                    sublime.error_message("Öffnen Sie eine Markdown-Datei um die \nÜberprüfung mit MK zu starten!")     
+                    sublime.error_message("Öffnen Sie eine Markdown-Datei um die \nÜberprüfung mit MK zu starten!")
                     return
             else:
                 path = os.path.dirname(self.view.window().active_view().file_name())
         except OSError:
             sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
             return
-        parent = os.path.abspath(os.path.join(path, os.pardir))   
+        parent = os.path.abspath(os.path.join(path, os.pardir))
         mk = mistkerl.Mistkerl()
         message = ""
-        errors = ""                     
+        errors = ""
         if function =="checkFile":
             errors = mk.run(path)
-        elif function =="checkAll":         
-            errors = mk.run(parent)         
+        elif function =="checkAll":
+            errors = mk.run(parent)
         if(len(errors) ==0):
-            
+
             sublime.message_dialog("Nun denn, ich konnte keine Fehler entdecken.\nHoffen wir, dass es auch wirklich keine gibt ;-).")
         else:
             sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
             formatter = meta.error_formatter()
             formatter.set_itemize_sign("  ")
             console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
-        if(Debug):          
+        if(Debug):
             if function == "checkFile":
                 message = "check file " + self.view.window().active_view().file_name() +" with MK"
             elif function == "checkAll":
@@ -302,30 +299,30 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
             if file_name and file_name.lower().endswith(".md"):
                 path = os.path.dirname(self.view.window().active_view().file_name())
             else:
-                sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")  
+                sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
                 return
         except OSError:
-            sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")     
-            return                  
-        os.chdir(path)  
+            sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
+            return
+        os.chdir(path)
         # just til gladtex is working well
-        
-        if(settings.get('use_gladtex')):            
-            p = pandoc.pandoc(use_gladtex = True)   
-        else: 
+
+        if(settings.get('use_gladtex')):
+            p = pandoc.pandoc(use_gladtex = True)
+        else:
             p = pandoc.pandoc(use_gladtex = False)
-        try:    
+        try:
             p.convert(file_name)
         except FileNotFoundError:
             sublime.error_message("Sie müssen Pandoc installieren.")
-            return      
-        if(autoload_html):          
+            return
+        if(autoload_html):
             print("open in browser",file_name.replace(".md",".html") )
             Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
     """
-{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} } 
+{ "keys": ["f6"], "command": "cmd", "args": {"function": "createAll"} }
     """
     def run(self,edit):
         saver.saveAllDirty()
@@ -334,17 +331,17 @@ class CreateAllCommand(sublime_plugin.TextCommand):
         except OSError:
             sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
             return
-        parent = os.path.abspath(os.path.join(path, os.pardir))        
+        parent = os.path.abspath(os.path.join(path, os.pardir))
         os.chdir(path)
         m = master.Master(parent)
         m.run()
         if(autoload_html):
-            parent = os.path.join(parent,"inhalt.html")     
-            print("open in browser",parent )    
+            parent = os.path.join(parent,"inhalt.html")
+            print("open in browser",parent )
             Browser(parent)
 
 
-class InsertLinkPanelCommand(sublime_plugin.TextCommand): 
+class InsertLinkPanelCommand(sublime_plugin.TextCommand):
     """
 { "keys": ["alt+shift+l"], "command": "insert_link_panel"}
     """
@@ -370,22 +367,22 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
             'url': lambda s: s,
             'linktext': lambda s: s,
     }[key](content)
-    
-    def on_done(self,content):    
+
+    def on_done(self,content):
         self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)
         self.counter += 1
-        if self.counter < (len(self.dictionary)):  
+        if self.counter < (len(self.dictionary)):
             self.show_prompt()
         else:
             self.input_done()
 
-    def input_done(self):       
-        url = self.dictionary['url'].value.lower()          
+    def input_done(self):
+        url = self.dictionary['url'].value.lower()
         if(not url.startswith("http://") and not url.startswith("https://")):
-            url = "http://"+url     
+            url = "http://"+url
         markdown = "[%s](%s)" % (self.dictionary['linktext'].value, url)
         self.view.run_command(
-            "insert_my_text", {"args":            
+            "insert_my_text", {"args":
             {'text': markdown}})
 
     def on_done_url(self, input):
@@ -393,20 +390,20 @@ class InsertLinkPanelCommand(sublime_plugin.TextCommand):
         #  if canceled, index is returned as  -1
         if input == -1 or not input:
             sublime.error_message("URL darf nicht leer sein")
-            return       
+            return
         #markdown = '[Linktext aendern](' +input +')'
         if(not input.lower().startswith("http://") or not input.lower().startswith("https://")):
             input = "http://"+input
         markdown = "[%s](%s)" % (self.linktext,input.lower())
         self.view.run_command(
-            "insert_my_text", {"args":            
+            "insert_my_text", {"args":
             {'text': markdown}})
 
-class InsertImagePanelCommand(sublime_plugin.TextCommand):   
+class InsertImagePanelCommand(sublime_plugin.TextCommand):
     """
 { "keys": ["ctrl+alt+i"], "command": "insert__image_panel"}
     """
-    def run(self, edit):        
+    def run(self, edit):
         # 0 is location of picture not a input_panel
         self.counter = 1
         self.keys = ['location', 'title', 'description']
