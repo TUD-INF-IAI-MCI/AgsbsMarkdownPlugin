@@ -125,12 +125,11 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                             with open(os.path.join(root,file)) as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
                                 content = md_file.read()
-                                headings = re.findall('[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\[\]\{\}\'$§%\*\_\;\:]+\n',content)
+                                headings = re.findall('^[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|\W[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n', content)
                                 if headings:
                                     parent = os.path.split(os.path.dirname(md_file.name))[1]
                                     self.linkDic[parent+'/'+file] = headings
             self.show_link_quick_panel(self.linkDic)
-
         else:
             sublime.error_message("Selektieren Sie eine Markdown-Datei um einen \ninternen Link einzufügen.")
 
@@ -150,8 +149,9 @@ class CreateInternalLink(sublime_plugin.TextCommand):
     def on_done(self, input):
         if input != -1:     # -1 = esc
             values = self.linkList[input].split('|')
-        
-            markdown = "[%s](%s)" % (values[1].replace('\n', ''), "../" + values[0].lower().replace(".md", ".html") + "#" + values[1].lower().replace(' ', '-').replace("\n", ''))
+            anchor = re.sub('[#~&"\?\+@\!\,\[\]\(\)\{\}\'$§%\*\_\;\:)=`´/]*',"",values[1].lower())
+            anchor = re.sub("\s","-",anchor)
+            markdown = "[%s](%s)" % (values[1].replace('\n', ''), "../" + values[0].lower().replace(".md", ".html") + "#" + anchor)
             self.view.run_command("insert_my_text", {"args": {'text': markdown}})
 
 
