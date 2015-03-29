@@ -125,8 +125,9 @@ class CreateInternalLink(sublime_plugin.TextCommand):
             for root, dirs, files in os.walk(str(parent)):
                 for file in files:
                     if file.endswith(".md"):
-                            with open(os.path.join(root,file)) as md_file:
+                            with codecs.open(os.path.join(root,file),'r',encoding='utf8') as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
+                                print(file)
                                 content = md_file.read()
                                 headings = re.findall('^[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|\W[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n', content)
                                 if headings:
