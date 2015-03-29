@@ -35,6 +35,9 @@ if VERSION > 3000:
             newPath = user_paths[indices[0]] +os.sep+ "binary"
             if not newPath in os.environ['PATH']:
                 os.environ['PATH'] +=";"+user_paths[indices[0]] +os.sep+ "binary"
+    elif sys.platform.lower().startswith("darwin"):
+        os.environ['PATH'] += ":/opt/local/bin"
+        print("'PATH'",os.environ['PATH'])
 else: 
     sublime.error_message("sublime version  < 3; not supported")
     
