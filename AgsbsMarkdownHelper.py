@@ -127,9 +127,11 @@ class CreateInternalLink(sublime_plugin.TextCommand):
                     if file.endswith(".md"):
                             with codecs.open(os.path.join(root,file),'r',encoding='utf8') as md_file:
                                 # reg = re.compile(r"\R[#]{1,6}[ \d\w.-®-]+\R")   # regex \R[#]{1,6}[ \d\w.-®-]+\R
-                                print(file)
                                 content = md_file.read()
-                                headings = re.findall('^[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|\W[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n', content)
+                                # remove navigation to pages and slides
+                                content = re.sub("(Seiten|Folien|Pages|Slides)[\[\]\(\):\s\d#\w-]*","",content)
+                                regex = re.compile('[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n[=]+|\W[#]{1,6}[\w\d#~& "\-\?\+@\!\.\,\(\)\[\]\{\}\'$§%\*\_\;\:]+\n')
+                                headings = re.findall(regex, content)
                                 if headings:
                                     parent = os.path.split(os.path.dirname(md_file.name))[1]
                                     self.linkDic[parent+'/'+file] = headings
