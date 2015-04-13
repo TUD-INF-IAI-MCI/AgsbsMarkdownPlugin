@@ -24,9 +24,8 @@
 
 <h1 id="kapitel-4">Kapitel 4</h1>
 <p><a name="seite-4--"/> - Seite 4 -</p>
-<p><EQ ENV="displaymath">
-\sigma
-</EQ></p>
+<p>Das ist ein Test <EQ ENV="displaymath"> \sigma </EQ>.</p>
+<p>asdasd asdasd</p>
 <h2 id="sadasd">sadasd</h2>
 <!-- page navigation -->
 

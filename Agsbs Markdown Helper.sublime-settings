@@ -7,5 +7,5 @@
 	"autoload_html": true,
 	"table_path": "tabellen",
 	"row_delimiter": ";",
-	"use_gladtex" : false
+	"use_gladtex" : true
 }
