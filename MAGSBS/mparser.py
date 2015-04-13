@@ -13,7 +13,7 @@ import re, os
 from . import datastructures
 from . import contentfilter as contentfilter
 
-class simpleMarkdownParser():
+class SimpleMarkdownParser():
     """Implement an own simple markdown parser. Just reads in the headings of
 the given markdown string. If needs arises for more soffisticated stuff, use
 python-markdown."""
@@ -60,13 +60,10 @@ xported JSon tree is then used for post-processing."""
             h.set_relative_heading_number(
                 self.determine_relative_heading_number( rHeading[0] ) )
             dirname = os.path.split( self.__path )[-1]
-            if( dirname.startswith("anh") or self.__file_name.startswith("anh")):
+            if dirname.startswith("anh"):
                 h.set_type('appendix')
-            elif( (dirname.startswith("v") or self.__file_name.startswith("v"))
-                    and (len(dirname)>1 or len(self.__file_name)>1)):
-                # assured that it starts with v and is longer than just v, now
-                # followed by a number?:
-                if( dirname[1].isdigit() or self.__file_name[1].isdigit() ):
+            elif dirname.startswith("v"): # is it a preface?
+                if len(dirname) > 1 and dirname[1].isdigit():
                     h.set_type( "preface" )
             self.__headings.append( h )
 
@@ -102,5 +99,66 @@ function findsit out."""
 
     def get_page_numbers(self):
         return self.__pagenumbers
+
+## The following is for those cases where parsing the Pandoc ast to get headings
+## or page numbers would mean a substancial overhead
+
+def create_heading(num, level, text):
+    """Add heading object to a collection."""
+    h = datastructures.Heading()
+    h.set_level(level)
+    h.set_line_number(num)
+    h.set_text(text)
+    return h
+
+def split_into_level_text(text):
+    """For markdown headings starting with #, return level and text as tuple."""
+    level = 0
+    while text.startswith('#'):
+        level += 1
+        text = text[1:]
+    while text.endswith('#'):
+        text = text[:-1]
+    text = text.lstrip().rstrip()
+    return (level, text)
+
+def headingExtractor(paragraphs, max_headings=-1):
+    """headingExtractor(list_of_paragraphs, max_headings=-1)
+    Return list of heading objects; if max_headings is set to a value > -1, only
+    this number of headings will be parsed."""
+    headings = []
+    headings_encountered = 0
+    for start_line, paragraph in paragraphs.items():
+        if max_headings > -1 and headings_encountered >= max_headings:
+            break
+        level = 0
+        text = None
+        if len(paragraph) == 1:
+            if paragraph[0].startswith('#'):
+                level, text = split_into_level_text(paragraph[0])
+        else:
+            if paragraph[1].startswith('==='):
+                level = 1
+                text = paragraph[0]
+            elif paragraph[1].startswith('---'):
+                level = 2
+                text = paragraph[0]
+        if level and text:
+            headings.append(create_heading(start_line, level, text))
+            headings_encountered += 1
+    return headings
+
+
+def pageNumberExtractor(paragraphs):
+    """Iterate over paragraphs and return a list of page numbers extracted from
+    those paragraphs."""
+    numbers = []
+    rgx = re.compile(r"^\|\|\s*-\s*(.+?)\s*-")
+    pars = [(l,e) for l,e in paragraphs.items() if len(e) == 1]
+    for start_line, par in pars:
+        result = rgx.search(par[0])
+        if result:
+            numbers.append((start_line, result.groups()[0]))
+    return numbers
 
 

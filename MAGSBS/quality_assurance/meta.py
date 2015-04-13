@@ -4,55 +4,10 @@
 """This file contains all helper functions and classes to represent a
 mistake."""
 
-import re
-from ...lib import enum
-import textwrap
-from ..datastructures import is_list_alike
-
-def headingExtractor(text):
-    headings = []
-    paragraph_begun = True
-    previous_line_heading = False
-    previous_line = ''
-    for num, line in enumerate(text.split('\n')):
-        if(line.strip() == ''):
-            paragraph_begun = True
-            previous_line_heading = False
-        else:
-            if(not paragraph_begun): # happens on the second line of a paragraph
-                if(line.startswith('---')):
-                    previous_line_heading = True
-                    headings.append((num, 2, previous_line)) # heading level 2
-                elif(line.startswith('===')):
-                    previous_line_heading = True
-                    headings.append((num, 1, previous_line)) # heading level 2
-                    continue
-            if(line.startswith("#")):
-                if(paragraph_begun):
-                    level = 0
-                    while(line.startswith("#") or line.startswith(" ")):
-                        if(line[0] == "#"): level += 1
-                        line = line[1:]
-                    while(line.endswith("#") or line.endswith(" ")):
-                        line = line[:-1]
-
-                    headings.append((num+1, level, line))
-                    previous_line_heading = True
-            paragraph_begun = False # one line of text ends "paragraph begun"
-        previous_line = line[:]
-    return headings
-
-
-def pageNumberExtractor(data):
-    """Iterate over lines and extract all those starting with ||. The page
-    number and the rest of the line is returned as a tuple."""
-    numbers = []
-    rgx = re.compile(r"^\|\|\s*-\s*(.+?)\s*-")
-    for num, line in enumerate(data.split('\n')):
-        result = rgx.search(line)
-        if(result):
-            numbers.append((num+1, result.groups()[0]))
-    return numbers
+import re, textwrap
+import enum
+from abc import ABCMeta, abstractmethod
+from .. import datastructures
 
 class MistakePriority(enum.IntEnum):
     critical = 1
@@ -63,13 +18,14 @@ class MistakeType(enum.Enum):
     """The mistake type determines the arguments and the environment in which to
     run the tests.
 
+Note for this table: from datastructures import Heading as H
+
 type                parameters      Explanation
 full_file           (content, name) applied to a whole file
 oneliner            (num, line)     applied to line, starting num = 1
-need_headings       (lnum, level,   applied to all headings
-                     title)
-need_headings_dir   {path : [lnum,  applied to all headings in a directory
-                     level, title]}
+need_headings       [H(), ...]      applied to all headings
+need_headings_dir   {path : [H(),   applied to all headings in a directory
+                     ...]
 need_pagenumbers    (lnum, level,   applied to all page numbers of page
                  string)
 need_pagenumbers_dir   see headings applied to all page numbers of directory"""
@@ -80,18 +36,25 @@ need_pagenumbers_dir   see headings applied to all page numbers of directory"""
     need_pagenumbers = 5
     need_pagenumbers_dir = 6
 
-class Mistake(object):
-    """Convenience class which saves the actual method and the type of
-    mistake."""
+class Mistake:
+    """This class implements the actual mistake checker.
+
+It has to be subclassed and the child needs to override the run method. It
+should set the relevant properties in the constructor."""
+    __metaclass__ = ABCMeta
+
     def __init__(self):
         self._type = MistakeType.full_file
         self._priority = MistakePriority.normal
         self.__apply = True
         self.__file_types = ["md"]
+        super().__init__()
+
     def set_file_types(self, types):
-        if(not is_list_alike(types)):
+        if not datastructures.is_list_alike(types):
             raise TypeError("List or tuple expected.")
         self.__file_types = types
+
     def get_file_types(self):
         """Return all file extensions which shall be checked."""
         return self.__file_types
@@ -99,16 +62,23 @@ class Mistake(object):
     def should_be_run(self):
         """Can be set e.g. for oneliners which have already found an error."""
         return self.__apply
+
     def set_run(self, value):
         assert type(value) == bool
         self.__apply = value
-    def get_type(self): return self._type
+
+    def get_type(self):
+        return self._type
+
     def set_type(self, t):
         if(isinstance(t, MistakeType)):
             self._type = t
         else:
             raise TypeError("Argument must be of enum type MistakeType")
-    def get_priority(self): return self._priority
+
+    def get_priority(self):
+        return self._priority
+
     def set_priority(self, p):
         if(isinstance(p, MistakePriority)):
             self._priority = p
@@ -120,15 +90,18 @@ class Mistake(object):
             return
         return self.worker(*args)
 
+    @abstractmethod
     def worker(self, *args):
-        raise NotImplementedError("The method run must be overridden by a child class.")
+        pass
 
     def error(self, msg, lnum=None, path=None):
         e = error_message()
         e.set_severity(self.get_priority())
-        e.set_message(msg)
-        if(lnum): e.set_lnum(lnum)
-        if(path): e.set_path(path)
+        e.set_message(' '.join(msg.split()))
+        if lnum:
+            e.set_lnum(lnum)
+        if path:
+            e.set_path(path)
         return e
 
 class onelinerMistake(Mistake):
