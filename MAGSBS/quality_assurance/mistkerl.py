@@ -32,6 +32,7 @@ from .. import filesystem as filesystem
 from .meta import *
 from .latex import *
 from .markdown import *
+from ..mparser import headingExtractor, pageNumberExtractor
 
 class Mistkerl():
     """Wrapper which wraps different levels of errors."""
@@ -44,7 +45,8 @@ class Mistkerl():
                 PageNumbersWithoutDashes, DoNotEmbedHTMLLineBreaks,
                 EmbeddedHTMLComperators, PageNumberWordIsMispelled,
                 HeadingOccursMultipleTimes,
-                HeadingsUseEitherUnderliningOrHashes, CasesSqueezedOnOneLine]
+                HeadingsUseEitherUnderliningOrHashes, CasesSqueezedOnOneLine,
+                HtmlArrowsInMarkdown]
         self.__cache_pnums = collections.OrderedDict()
         self.__cache_headings = collections.OrderedDict()
         self.__output = []
