@@ -5,7 +5,7 @@
 """Common datastructures."""
 
 import os, sys
-import enum
+from ..lib import enum
 from .errors import WrongFileNameError
 from . import config
 
