@@ -4,7 +4,8 @@
 # (c) 2015 Sebastian Humenda <shumenda |at| gmx |dot| de>
 """Common datastructures."""
 
-import os, re
+import os, sys
+import enum
 from .errors import WrongFileNameError
 from . import config
 
@@ -61,44 +62,55 @@ This class represents a heading to ease the handling of headings.
 - set_text must be called to set heading text and generate id
 - set_level must be called to set the heading level in the source document
 
-There is a list of valid types (heading.types) containing all possible types of
-a heading. heading.get_type() will only return those. set_type() however will
-raise a type error, if the type is not recognized.
+For specifying the type of a heading, Heading.Type is used, which is an enum.
 """
-    def __init__(self, path, file_name):
+    class Type(enum.Enum):
+        NORMAL = 0 # most headings are of that type
+        APPENDIX = 1
+        PREFACE = 2
+    def __init__(self, path=None, file_name=None):
         self.__line_number = None
         self.__text = ''
         self.__id = ''
         self.__level = -1
-        self.__chapter_number = path2chapter(file_name)
+        self.__chapter_number = None
+        if file_name:
+            self.__chapter_number = path2chapter(file_name)
         self.__path = path
         self.__file_name = file_name
         c = config.confFactory()
         c = c.get_conf_instance()
         self.__use_appendix_prefix = c['appendixPrefix']
-        self.types = ['main', # usual headings
-                'appendix', 'preface']
-        if(file_name.startswith('anh')):
-            self.__type = 'main'
-        elif(file_name.startswith('v')):
-            self.__type = 'preface'
-        else:
-            self.__type = '__main__'
+        if not file_name:
+            self.__type = Heading.Type.NORMAL
+        else: # guess heading type
+            if file_name.startswith('anh'):
+                self.__type = Heading.Type.APPENDIX
+            elif file_name.startswith('v'):
+                self.__type = Heading.Type.PREFACE
+            else:
+                self.__type = Heading.Type.NORMAL
         self.__relative_heading_number = None
 
     def set_level(self, level):
         self.__level = level
+
     def get_level(self):
         return self.__level
-    def get_type(self):
-        return self.__type
-    def set_type(self, a_type): # ToDo: do not use strings, but enum
-        if(not a_type in self.types):
-            raise ValueError("Wrong heading type. Must be either main, appendix or preface.")
-        else:
-            self.__type = type
 
-    def get_id(self):            return self.__id
+    def get_type(self):
+        """Return of which Heading.Type this heading is."""
+        return self.__type
+
+    def set_type(self, a_type):
+        if not isinstance(a_type, Heading.Type):
+            raise ValueError("Wrong heading type. Must be of type Heading.Type.")
+        else:
+            self.__type = a_type
+
+    def get_id(self):
+        return self.__id
+
     def set_text(self, text):
         self.__text = text
         self.__id = gen_id(text)
@@ -120,8 +132,10 @@ set_relative_heading_number(list) -> set relative heading number in document."""
         self.__use_appendix_prefix = usage
 
     def get_markdown_link(self):
+        if not self.__chapter_number:
+            raise ValueError("This heading got no information about the file name and hence cannot determine the chapter number used in the MarkDown link.")
         if(self.get_level() == 1):
-            full_number = str( self.__chapter_number )
+            full_number = str(self.__chapter_number)
         elif(self.get_level() == -1):
             raise ValueError("Heading level not set.")
         else:
@@ -131,21 +145,21 @@ set_relative_heading_number(list) -> set relative heading number in document."""
             rh = self.get_relative_heading_number()[1:]
             # rh shall be .num.num.num if nested, else ''4
             rh = ('.' + '.'.join( [str(i) for i in rh] ) if len( rh ) else '' )
-            full_number = str( self.__chapter_number ) + rh
+            full_number = str(self.__chapter_number) + rh
 
         # prefix full_number with a capital 'A' for appendices, if wished
-        if(self.get_type() == 'appendix' and self.__use_appendix_prefix):
+        if self.get_type() == Heading.Type.APPENDIX and self.__use_appendix_prefix:
             full_number = 'A.' + full_number
-        dir_above_file = os.path.split( self.__path )[1]
+        dir_above_file = os.path.split(self.__path)[1]
         return '[%s. %s](%s/%s.html#%s)' % (full_number, self.get_text(),
-                dir_above_file, self.__file_name[:-2], self.get_id())
+                dir_above_file, self.__file_name[:-3], self.get_id())
 
-        def set_line_numer(self, lnum):
-            """Set the line number, e.g. if heading was taken from a file."""
-            self.__line_number = lnum
+    def set_line_number(self, lnum):
+        """Set the line number, e.g. if heading was taken from a file."""
+        self.__line_number = lnum
 
-        def get_line_number(self):
-            return self.__line_number
+    def get_line_number(self):
+        return self.__line_number
 
 
 def is_list_alike(obj):
@@ -153,3 +167,19 @@ def is_list_alike(obj):
     a = hasattr(obj, '__iter__')
     b = hasattr(obj, '__getitem__')
     return a and b
+
+def get_encoding():
+    """Return encoding for stdin/stdout."""
+    encoding = sys.getdefaultencoding() # fallback
+    if hasattr(sys.stdout, encoding):
+        if sys.stdout.encoding:
+            encoding = sys.st
+    return encoding
+
+def decode(input):
+    """Safe version to decode data from subprocesses."""
+    if not isinstance(input, bytes):
+        raise TypeError("Only inputs are supported here.")
+    return input.decode(get_encoding())
+
+
