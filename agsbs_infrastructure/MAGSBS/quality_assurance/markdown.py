@@ -2,7 +2,7 @@
 #pylint: disable=line-too-long,arguments-differ,unused-variable
 """All checkers for MarkDown files belong here."""
 
-from .meta import Mistake, MistakeType, MistakePriority, onelinerMistake
+from .meta import Mistake, MistakeType, MistakePriority, OnelinerMistake
 import os, re
 from .. import config
 
@@ -26,25 +26,35 @@ class PageNumberIsParagraph(Mistake):
                     return self.error(start_line + num)
 
 
-class HeadingIsParagraph(Mistake):
-    def __init__(self):
-        Mistake.__init__(self)
-        self.set_priority(MistakePriority.critical)
-        self.set_type(MistakeType.full_file)
-
-    def worker(self, *args):
-        """Check whether all headings are on a paragraph on it's own."""
-        error_text = "Jede Überschrift muss in der Zeile darüber oder darunter eine Leerzeile haben, das heißt sie muss in einem eigenen Absatz stehen."
-        for start_line, paragraph in args[0].items():
-            if len(paragraph) == 1:
-                continue # possibly correct
-            for lnum, line in enumerate(paragraph):
-                if line.startswith('===') or line.startswith('---'):
-                    # not on the first or last line of paragraph
-                    if lnum != 1 or lnum < (len(paragraph)-1):
-                        return self.error(error_text, start_line + lnum)
-                    elif line.startswith('#'):
-                        return self.error(error_text, start_line + lnum)
+# previous versions of Pandoc weren#t clever enough to detect that
+#class HeadingIsParagraph(Mistake):
+#    """Only check for ==== or ---- headings, for the others Pandoc is clever enough."""
+#    def __init__(self):
+#        Mistake.__init__(self)
+#        self.set_priority(MistakePriority.critical)
+#        self.set_type(MistakeType.full_file)
+#
+#    def worker(self, *args):
+#        """Check whether all headings are on a paragraph on it's own."""
+#        error_text = "Jede Überschrift muss in der Zeile darüber oder darunter eine Leerzeile haben, das heißt sie muss in einem eigenen Absatz stehen."
+#        for start_line, paragraph in args[0].items():
+#            if len(paragraph) == 1:
+#                continue # possibly correct
+#            # if --- is encountered, it is first checked whether there is another --- in the paragraph, if so it is ignored because it is a table
+#            last_line = ''
+#            for lnum, line in enumerate(paragraph):
+#                if line.startswith('===') or line.startswith('---'):
+#                    if "|" in line or " " in line.rstrip():
+#                        continue # that's a table
+#                    if len(paragraph) == 2:
+#                        return # one line text, one ascii line, so it's all right
+#                    # check whether marker comes up again, if yes, it's a table -> ignore. Else error.
+#                    for line in paragraph[lnum+1:]:
+#                        if line.startswith('---'):
+#                            return # found it again, is a table, ignore
+#                    return self.error(error_text, start_line + lnum)
+#                elif line.startswith('#'):
+#                    return self.error(error_text, start_line + lnum)
 
 class LevelOneHeading(Mistake):
     """Parse the directory and raise errors if more than one level-1-heading was encountered."""
@@ -86,36 +96,41 @@ class ItemizeIsParagraph(Mistake):
         self.set_type(MistakeType.full_file)
         self._match = re.compile(r"^\d+\. ")
         self.__lastlines = []
+
     def is_item_line(self, line):
         for c in ['+ ', '* ', '- ']:
             if line.startswith(c):
                 # ignore "* *" which are used for horizontal bars
-                if len(line) > 3 and line[2] != line[0]:
+                if '* *' not in line:
                     return True
         if self._match.search(line):
             return True
         return False
 
-    def whole_paragraph_is_itemize(self, paragraph):
-        if not self.is_item_line(paragraph[0]):
-            return False
-        last_item = len(paragraph) - 1
-        while paragraph[last_item][0].isspace():
-            last_item -= 1
-        if self.is_item_line(paragraph[last_item]):
-            return True
-        else:
-            return False
-
     def worker(self, *args):
+        """Only mark this as an error, when more than two itemize signs have
+        been found at the beginning of a line, so that e.g. a dash which is ust
+        in a text is not recognized as an itemize environment."""
         for start_line, paragraph in args[0].items():
+            # if first line is itemize, don't check this paragraph
+            if len(paragraph) > 0:
+                if self.is_item_line(paragraph[0]):
+                    continue
+            # abort if it's a table
+            if len(paragraph) >= 2:
+                if '---' in paragraph[1] and ' ' in paragraph[1].rstrip():
+                    continue
+            item_encountered = False
             for lnum, line in enumerate(paragraph):
                 if self.is_item_line(line):
-                    # check whether first and last line is an item
-                    if not self.whole_paragraph_is_itemize(paragraph):
-                        return self.error("""Eine Aufzählung muss in einem eigenen
+                    # itemize encountered and first line was no itemize line?
+                    if lnum != 0:
+                        if item_encountered:
+                            return self.error("""Eine Aufzählung muss in einem eigenen
                                 Absatz stehen, d. h. es muss davor und danach
                                 eine Leerzeile sein.""", start_line+lnum)
+                        else:
+                            item_encountered = True
 
 
 class oldstyle_pagenumbering(Mistake):
@@ -294,7 +309,7 @@ class PageNumbersWithoutDashes(Mistake):
                 return self.error("Es fehlt ein \"-\" in der Seitenzahl. Vorgabe: " +
                     "\"|| - Seite xyz -\"", num)
 
-class DoNotEmbedHTMLLineBreaks(onelinerMistake):
+class DoNotEmbedHTMLLineBreaks(OnelinerMistake):
     """Instead of <br> for an empty line, a single \\ can be used."""
     def __init__(self):
         super().__init__()
@@ -307,16 +322,17 @@ class DoNotEmbedHTMLLineBreaks(onelinerMistake):
                     "eine Zeile und lässt davor und danach eine Zeile frei, " +
                     "hat dies denselben Effekt.",  num)
 
-class EmbeddedHTMLComperators(onelinerMistake):
+class EmbeddedHTMLComperators(OnelinerMistake):
     """Instead of &lt;&gt;, use \\< \\>."""
     def __init__(self):
-        onelinerMistake.__init__(self)
+        OnelinerMistake.__init__(self)
+        self.set_priority(MistakePriority.pedantic)
         self.pattern = re.compile(r'&(lt|gt);')
 
     def check(self, num, line):
         if(self.pattern.search(line.lower())):
-            return self.error("Relationsoperatoren sollten nicht mittels HTML, " +
-                    "sondern mittels \\< und \\> erzeugt werden.", num)
+            return self.error("Relationsoperatoren sollten möglichst nicht mittels HTML, " +
+                    "sondern besser mittels \\< und \\> erzeugt werden.", num)
 
 class HeadingsUseEitherUnderliningOrHashes(Mistake):
     def __init__(self):
@@ -332,4 +348,5 @@ class HeadingsUseEitherUnderliningOrHashes(Mistake):
                         gekennzeichnet. Am Besten ist es, die # zu entfernen,
                         da sie sonst als Text angezeigt werden.""",
                         lnum=heading.get_line_number())
+
 

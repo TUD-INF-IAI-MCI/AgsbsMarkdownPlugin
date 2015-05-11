@@ -7,6 +7,7 @@ customized os.walk()-alike function to classes modifying Markdown documents."""
 
 import os
 from . import datastructures
+from .datastructures import Heading
 from . import config
 from .errors import MissingMandatoryField
 _ = config._
@@ -24,7 +25,7 @@ This class must be run from the lecture root.
         c = config.confFactory()
         self.conf  = c.get_conf_instance()
         self.__use_appendix_prefix = self.conf['appendixPrefix']
-        # two lists for headings
+        # three lists for headings
         self.__main = []
         self.__appendix = []
         self.__preface = []
@@ -36,14 +37,14 @@ for later output. For each heading, decide whether conf['depth'] > heading.depth
 and in- or exclude it."""
         for headings in self.__index.values():
             for heading in headings:
-                if(heading.get_level() > self.conf['tocDepth']):
+                if heading.get_level() > self.conf['tocDepth']:
                     continue # skip those headings
 
-                if(heading.get_type() == 'appendix'):
-                    if(self.__use_appendix_prefix):
+                if heading.get_type() == Heading.Type.APPENDIX:
+                    if self.__use_appendix_prefix:
                         heading.use_appendix_prefix(True)
                     self.__appendix.append(heading.get_markdown_link())
-                elif(heading.get_type() == 'preface'):
+                elif heading.get_type() == Heading.Type.PREFACE:
                     self.__preface.append( heading.get_markdown_link() )
                 else:
                     self.__main.append(heading.get_markdown_link())
@@ -139,7 +140,7 @@ document and in position 1 the string for the outsourcing document.
     def get_outsourcing_link(self):
         """Return the link for the case that the picture is excluded."""
         label = datastructures.gen_id( self.get_title() )
-        link_text = _('description of image outsourced')
+        link_text = _('external image description')
         return '[ ![%s](%s) ](%s#%s)' % (link_text, self.__image_path,
                 self.get_outsource_path(), label)
 

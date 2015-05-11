@@ -1,61 +1,13 @@
 # Disabling the checkers above is discouraged, but encouraged for this file;
 # pylint makes mistakes itself
-#pylint: disable=line-too-long,abstract-class-little-used,no-init,too-few-public-methods
+#pylint: disable=line-too-long,no-init,too-few-public-methods
 """This file contains all helper functions and classes to represent a
 mistake."""
 
-import re, textwrap
-from ...lib import enum
+import textwrap
+import enum
 from abc import ABCMeta, abstractmethod
 from .. import datastructures
-
-def headingExtractor(paragraphs):
-    headings = []
-    def add_heading(num, level, text):
-        h = datastructures.Heading()
-        h.set_level(level)
-        h.set_line_number(num)
-        h.set_text(text)
-        headings.append(h)
-    def split_into_level_text(text):
-        level = 0
-        while text.startswith('#'):
-            level += 1
-            text = text[1:]
-        while text.endswith('#'):
-            text = text[:-1]
-        text = text.lstrip().rstrip()
-        return (level, text)
-
-    for start_line, paragraph in paragraphs.items():
-        level = 0
-        text = None
-        if len(paragraph) == 1:
-            if paragraph[0].startswith('#'):
-                level, text = split_into_level_text(paragraph[0])
-        else:
-            if paragraph[1].startswith('==='):
-                level = 1
-                text = paragraph[0]
-            elif paragraph[1].startswith('---'):
-                level = 2
-                text = paragraph[0]
-        if level and text:
-            add_heading(start_line, level, text)
-    return headings
-
-
-def pageNumberExtractor(paragraphs):
-    """Iterate over paragraphs and return a list of page numbers extracted from
-    those paragraphs."""
-    numbers = []
-    rgx = re.compile(r"^\|\|\s*-\s*(.+?)\s*-")
-    pars = [(l,e) for l,e in paragraphs.items() if len(e) == 1]
-    for start_line, par in pars:
-        result = rgx.search(par[0])
-        if result:
-            numbers.append((start_line, result.groups()[0]))
-    return numbers
 
 class MistakePriority(enum.IntEnum):
     critical = 1
@@ -76,13 +28,16 @@ need_headings_dir   {path : [H(),   applied to all headings in a directory
                      ...]
 need_pagenumbers    (lnum, level,   applied to all page numbers of page
                  string)
-need_pagenumbers_dir   see headings applied to all page numbers of directory"""
+need_pagenumbers_dir   see headings applied to all page numbers of directory
+need_configuration      take configuration as input
+"""
     full_file = 1
     oneliner = 2
     need_headings = 3
     need_headings_dir = 4
     need_pagenumbers = 5
     need_pagenumbers_dir = 6
+    need_configuration = 7
 
 class Mistake:
     """This class implements the actual mistake checker.
@@ -112,7 +67,7 @@ should set the relevant properties in the constructor."""
         return self.__apply
 
     def set_run(self, value):
-        assert type(value) == bool
+        assert isinstance(value, bool)
         self.__apply = value
 
     def get_type(self):
@@ -152,11 +107,11 @@ should set the relevant properties in the constructor."""
             e.set_path(path)
         return e
 
-class onelinerMistake(Mistake):
+class OnelinerMistake(Mistake):
     """Class to ease the creation of onliner checks further:
-class myMistake(onelinerMistake):
+class myMistake(OnelinerMistake):
     def __init__(self):
-        onelinerMistake.__init__(self)
+        OnelinerMistake.__init__(self)
     def check(self, num, line):
         # ToDo: implement checks here
 It'll save typing."""
@@ -195,33 +150,30 @@ e.set_path("/dev/null")
         self.__severity = None
 
     def set_severity(self, level):
-        if(type(level) != MistakePriority):
+        if not isinstance(level, MistakePriority):
             raise ValueError("Priority must be of type MistakePriority.")
         self.__severity = level
 
     def set_message(self, msg):
-        if(type(msg) == str):
+        if isinstance(msg, str):
             self.__msg = msg
         else:
             self.__msg = str(msg)
 
     def set_lnum(self, lnum):
-        if(type(lnum) != int):
+        if not isinstance(lnum, int):
             raise ValueError("Line number must be an integer.")
         self.__lnum = lnum
 
     def set_path(self, path):
-        if(type(path) == str):
+        if isinstance(path, str):
             self.__path = path
         else:
             self.__path = str(path)
 
     def is_valid(self):
-        if(self.__path != None and self.__msg != None and
-                self.__severity != None):
-            return True
-        else:
-            return False
+        return self.__path is not None and self.__msg is not None and \
+                self.__severity is not None
 
     def get_severity(self):
         return self.__severity
@@ -235,7 +187,18 @@ e.set_path("/dev/null")
     def get_lnum(self):
         return self.__lnum
 
-class error_formatter(object):
+    def __hash__(self):
+        """Generate a unique identifier - useful for sorting."""
+        return hash(self.__path) + (self.__lnum if self.__lnum else 0)
+
+    def __lt__(self, other):
+        return hash(self) < hash(other)
+
+    def __et__(self, other):
+        return hash(self) == hash(other)
+
+
+class error_formatter:
     """Format an error message according to options set. One use case might be
 the output on the command line.
 
@@ -299,7 +262,7 @@ self.sort_critical_first(True)."""
         if self.__sort_critical_first:
             return sorted(errors, key=error_message.get_severity)
         else:
-            return sorted(errors, key=error_message.get_path)
+            return sorted(errors)
 
     def format_errors(self, errors):
         errors = self.__sort(errors)
