@@ -4,19 +4,18 @@ Read in user configuration.
 #pylint: disable=invalid-encoded-data,line-too-long,too-few-public-methods
 
 import getpass, os, sys
-import datetime, codecs
+import datetime
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+from . import common
 from .errors import ConfigurationError, ConfigurationNotFoundError
 
 if not (sys.platform.lower().startswith("win")):
     import pwd
 
-VERSION = '0.1.1'
+VERSION = '0.2'
 ## default values
 CONF_FILE_NAME = ".lecture_meta_data.dcxml"
-GLADTEX_OPTS = '-a -d bilder'
-PYVERSION = int(sys.version[0])
 # as a regular expression all kinds of token which can mark a page
 PAGENUMBERINGTOKENS = ['slide','folie','seite','page']
 PAGENUMBERING_REGEX = r'-\s*(' + '|'.join(PAGENUMBERINGTOKENS) + \
@@ -55,23 +54,24 @@ subsequent calls, the already created instance is returned.  """
         return isinstance(inst, self._decorated)
 
 def get_semester():
+    """Guess from the time in the year the semester (summer or winter, looking
+    at German semesters, though."""
     semester = ''
     month = datetime.datetime.now().month
-    if(month < 4 or month > 10):
+    if month < 4 or month > 10:
         semester = 'WS'
         year = datetime.datetime.now().year
-        if(month < 4):
+        if month < 4: # if before April, that's still previous winter semester
             year -= 1
     else:
         semester = 'SS'
         year = datetime.datetime.now().year
-    if(semester == 'WS'):
-        semester += str( year )[-2:] + '/' + str( year + 1 )[-2:]
-    else:
-        semester += str( year )[-2:]
-    return semester
+    yearstring = str(year)
+    if semester == 'WS': # winter semester stretches across the years boundary:
+        yearstring += '/' + str(year + 1)
+    return '%s %s' % (semester, yearstring)
 
-def has_meta_data(path):
+def has_configuration(path):
     """Return whether lecture meta data can be found in the specified path."""
     if(not path.endswith(CONF_FILE_NAME)):
         path = os.path.join(path, CONF_FILE_NAME)
@@ -85,8 +85,8 @@ class LectureMetaData(dict):
 The lecture conversion needs meta data which is then embedded into the HTML
 document. Those fields are e.g. source, editor, etc.
 
-This class provides a writer and also a reader for those files. The usage is as
-follows:
+This class provides a writer and also a reader for those files. A usage scenario
+could look like this:
 
 l = LectureMetaData("directory")
 l.read()
@@ -109,7 +109,7 @@ workinggroup    - default is 'AGSBS'
 semesterofedit  - either WSYY or SS/WSYY, where YY are the last two digits of
                   the year and the letters in ront are literals
 
-Please note: you should not use this clss, except you can make sure that exactly
+Please note: you should not use this class, except you can make sure that exactly
 one instance at a time exists.
 """
     def __init__(self, path):
@@ -117,11 +117,11 @@ one instance at a time exists.
         self.__path = path
         self.__numerical = ['tocDepth', 'appendixPrefix', 'pageNumberingGap']
         self['workinggroup'] = 'AGSBS'
-        if(sys.platform.lower().startswith('win')>=0):
+        if 'win32' in sys.platform or 'wind' in sys.platform:
             self['editor'] = getpass.getuser()
         else: # full name with the unix way
             self['editor'] = pwd.getpwuid(os.getuid())[4]
-            # on some systems, real name ends with commas, strip those
+            # on some systems, real name end with commas, strip those
             while(self['editor'].endswith(',')):
                 self['editor'] = self['editor'][:-1]
         self['semesterofedit'] = get_semester()
@@ -135,8 +135,7 @@ one instance at a time exists.
         self['tocDepth'] = 5
         self['appendixPrefix'] = 0
         self['pageNumberingGap'] = 5
-        self['SourceAuthor'] = 'unknown'
-        self['GladTeXopts'] = '-a -d bilder'
+        self['sourceAuthor'] = 'unknown'
         self.dictkey2xml = {
                 'workinggroup' : 'contributor', 'editor' : 'creator',
                 'semesterofedit' : 'date', 'lecturetitle' : 'title',
@@ -146,8 +145,7 @@ one instance at a time exists.
                 'tocDepth':'MAGSBS:tocDepth',
                 'appendixPrefix' : 'MAGSBS:appendixPrefix',
                 'pageNumberingGap' : 'MAGSBS:pageNumberingGap',
-                'SourceAuthor':'MAGSBS:SourceAuthor',
-                'GladTeXopts':'MAGSBS:GladTeXopts'
+                'sourceAuthor':'MAGSBS:sourceAuthor',
         }
         dict.__init__(self)
 
@@ -156,12 +154,11 @@ one instance at a time exists.
         root.attrib['xmlns:dc'] = 'http://purl.org/dc/elements/1.1'
         root.attrib['xmlns:MAGSBS'] = 'http://elvis.inf.tu-dresden.de'
         for key, value in self.items():
-            if(not self.dictkey2xml[key].startswith('MAGSBS:')):
+            if not self.dictkey2xml[key].startswith('MAGSBS:'):
                 c = ET.SubElement(root, 'dc:'+self.dictkey2xml[ key ] )
             else:
                 c = ET.SubElement(root, self.dictkey2xml[key])
-            if(key in self.__numerical): value = str(value)
-            c.text = value
+            c.text = str(value)
         out = minidom.parseString('<?xml version="1.0" encoding="UTF-8"?>' + \
                 ET.tostring(root, encoding="unicode")
                 ).toprettyxml(indent="  ", encoding="utf-8")
@@ -174,29 +171,32 @@ one instance at a time exists.
             return tag
 
     def read(self):
-        if(has_meta_data(self.__path)):
-            xmlkey2dict = {}
-            for value,key in self.dictkey2xml.items():
-                if(key.startswith('MAGSBS')): key = key[7:]
-                xmlkey2dict[ key ] = value
+        if not has_configuration(self.__path):
+            return
+        xmlkey2dict = {}
+        for value,key in self.dictkey2xml.items():
+            if key.startswith('MAGSBS'):
+                key = key.split(':')[1]
+            xmlkey2dict[key] = value
 
-            # py 2 / 3:
-            data = codecs.open( self.__path, 'r', 'utf-8').read()
-            if(PYVERSION == 2):
-                data = data.encode('utf-8')
-            root = ET.fromstring( data )
+        with open(self.__path, 'r', encoding='utf-8') as data_source:
+            root = ET.fromstring(data_source.read())
             for child in root:
                 try:
-                    key = xmlkey2dict[ self.normalize_tag( child.tag )]
+                    key = xmlkey2dict[self.normalize_tag(child.tag)]
+                except KeyError as e:
+                    common.warn("Unknown key %s, skipping." % e.args[0])
+                    continue
+                try:
                     value = child.text
-                    if(value in self.__numerical):
+                    if value in self.__numerical:
                         try:
                             value = int( value )
                         except ValueError:
                             raise ConfigurationError("Option " + key +
                                     "has invalid,  non-numerical value of " +
                                     value)
-                    self[ key ] = value
+                    self[key] = value
                 except IndexError:
                     print(ET.dump( child ))
 
@@ -224,8 +224,8 @@ configuration and then, if present, the corresponding subdirectory configuration
         """Return either an old object if already created or create a new one
 (kind of singleton). Automatically read the configuration upon creation."""
         path = self.__getpath()
-        if(path in self._instances.keys()):
-            return self._instances[ path ]
+        if path in self._instances.keys():
+            return self._instances[path]
         else:
             try:
                 self._instances[ path ] = LectureMetaData( path )
@@ -281,7 +281,6 @@ l10n with Windows."""
             'index':'index',
             'external image description' : "description de l'image externe",
             'images':'images',
-            'index' : ' index',
             'next':'suivant',  'previous':'précédent',
             'chapter':'chapitre', 'paper':'document',
             'Remarks about the accessible version':'Remarques concernant la version accessible',
