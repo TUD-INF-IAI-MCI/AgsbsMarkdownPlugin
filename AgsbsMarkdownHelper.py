@@ -314,16 +314,16 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         # just til gladtex is working well
 
         if(settings.get('use_gladtex')):
-            p = pandoc.pandoc(use_gladtex = True)
+            p = pandoc.pandoc()
         else:
-            p = pandoc.pandoc(use_gladtex = False)
+            p = pandoc.pandoc()
         try:
-            p.convert(file_name)
-        except FileNotFoundError:
+            p.convert_file(file_name)
+        except FileNotFoundError as ex_message:
             sublime.error_message("Sie müssen Pandoc installieren.")
             return
         if(autoload_html):
-            print("open in browser",file_name.replace(".md",".html") )
+            print("open in browser",file_name.replace(".md",".html"))
             Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
