@@ -15,7 +15,7 @@ VERSION = int(sublime.version())
 reloader = "reloader"
 
 if VERSION > 3000:
-    print("sublime version is higher >= 3") 
+    print("sublime version is higher >= 3")
     from .agsbs_infrastructure.MAGSBS import master
     from .agsbs_infrastructure.MAGSBS import config as config
     from .agsbs_infrastructure.MAGSBS.quality_assurance import mistkerl as mistkerl
@@ -23,8 +23,8 @@ if VERSION > 3000:
     from .agsbs_infrastructure.MAGSBS import filesystem
     from .agsbs_infrastructure.MAGSBS.quality_assurance import meta as meta
     from .agsbs_infrastructure.MAGSBS import factories
-    
-    if(sys.platform.lower().startswith("win")): 
+
+    if(sys.platform.lower().startswith("win")):
         user_paths = os.environ['PATH'].split(os.pathsep)
         indices = [i for i, elem in enumerate(user_paths) if 'matuc' in elem]
         if not indices:
@@ -38,16 +38,16 @@ if VERSION > 3000:
     elif sys.platform.lower().startswith("darwin"):
         os.environ['PATH'] += ":/opt/local/bin"
         print("'PATH'",os.environ['PATH'])
-else: 
+else:
     sublime.error_message("sublime version  < 3; not supported")
-    
+
 def plugin_loaded():
-    global settings     
+    global settings
 
     settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')
     sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
     global Debug
-    Debug = settings.get("debug")   
+    Debug = settings.get("debug")
     global autoload_html
     autoload_html = settings.get("autoload_html")
     global messageBox
@@ -66,7 +66,7 @@ if reloader in sys.modules:
 
 class Browser():
     def __init__(self,filename):
-        url = "file://"+filename    
+        url = "file://"+filename
         webbrowser.open(url,new = 2)
 
 
@@ -80,12 +80,12 @@ class MessageBox():
     def showMessageBox(self,message):
         sublime.message_dialog(message)
 
-class Console():    
-    def printMessage(self,view, category,  message):        
+class Console():
+    def printMessage(self,view, category,  message):
         view.window().run_command("show_panel",{"panel": "console"})
         print("######## Begin",category," #########\n")
         print(message)
-        print("\n######## END ",category," #########")  
+        print("\n######## END ",category," #########")
 
 class Bunch(object):
 
@@ -96,14 +96,14 @@ class Bunch(object):
         return self.__dict__ == other.__dict__
 
 class Saver(): # ToDo: function
-    def saveAllDirty(self):             
+    def saveAllDirty(self):
         for w in sublime.windows():
             for v in w.views():
                 if not v.file_name():
                     dirty_unname = True
-                    # maybe toDo                    
+                    # maybe toDo
                 elif v.file_name().endswith(".md"):
-                    if v.is_dirty():                                        
+                    if v.is_dirty():
                         if settings.get("autosave"):
                             v.run_command("save")
                         else:
@@ -204,7 +204,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
         if value is not None:
             self.dictionary[self.keys[self.counter]].value = value
             self.counter += 1
-        if self.counter < (len(self.dictionary)):  
+        if self.counter < (len(self.dictionary)):
             self.show_prompt()
         else:
             self.input_done()
@@ -227,7 +227,7 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
         if key == 'title':
             error =  False
         if key == 'chapter_count':
-            try: 
+            try:
                 content = int(content)
                 error =  False
             except ValueError:
@@ -418,11 +418,11 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
             'location': Bunch(name='Speicherort', value=''),
             'title': Bunch(name='Bildname', value=''),
             'description': Bunch(name='Bildbeschreibung', value=''),
-        }   
-        self.imageFormats = settings.get("image_formats")   
+        }
+        self.imageFormats = settings.get("image_formats")
         self.imagefiles = self.getFileName(self.imageFormats)
-        if self.imagefiles:             
-            if(settings.get("hints")):              
+        if self.imagefiles:
+            if(settings.get("hints")):
                 messageBox.showMessageBox("Sie wollen ein Bild hinzufügen. Es sind 3 Eingaben erforderlich: \n"
                 "\t1. Speicherort des Bildes \n"
                 "\t2. Name des Bildes \n"
@@ -434,35 +434,35 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
             message = "Im Ordner Bilder sind keine Bilddaten gespeichert.\n"
             message += "Speichern zuerst Bilder in dem Ordner\n"
             message += dirname +"\n"
-            message += "um ein Bild einfügen zu können." 
+            message += "um ein Bild einfügen zu können."
             sublime.error_message(message)
-            return      
+            return
 
-    def getFileName(self, imageFormats):        
-        listFiles = []      
-        filename = self.view.file_name()        
-        dir = os.path.dirname(filename)                 
-        for (dirname,dirs, files) in os.walk(dir):                  
-            for file in files:              
+    def getFileName(self, imageFormats):
+        listFiles = []
+        filename = self.view.file_name()
+        dir = os.path.dirname(filename)
+        for (dirname,dirs, files) in os.walk(dir):
+            for file in files:
                 if file.endswith(tuple(imageFormats)):
                     parentname = os.path.basename(os.path.normpath(dirname))
                     listFiles.append(parentname +"/" + file)
         return listFiles
 
-    def show_prompt(self, listFile):        
-        self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)      
-            
-    def on_done_filename(self, input):              
+    def show_prompt(self, listFile):
+        self.view.window().show_quick_panel(listFile,self.on_done_filename,sublime.MONOSPACE_FONT)
+
+    def on_done_filename(self, input):
         if input == -1:  # esc
-            #sublime.error_message("W?len Sie eine Bilddatei aus!")         
+            #sublime.error_message("W?len Sie eine Bilddatei aus!")
             print("input = -1???")
         elif input != -1 :
             self.dictionary["location"].value = self.check_user_input(self.keys[0], self.imagefiles[input])
             self.show_prompt_image()
-    
-    def show_prompt_image(self):            
+
+    def show_prompt_image(self):
         self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
-    
+
     def check_user_input(self, key, content):
         return {
         'location': lambda s: s,
@@ -471,13 +471,13 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         }[key](content)
 
     def on_done(self,content):
-        self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)    
+        self.dictionary[self.keys[self.counter]].value = self.check_user_input(self.keys[self.counter], content)
         self.counter += 1
         if self.counter < (len(self.dictionary)): # skip last index
             self.show_prompt_image()
         else:
             self.input_done()
-        
+
 
     def input_done(self):
         """
@@ -486,22 +486,22 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
                 'title': Bunch(name='Bildname', value=''),
                 'description': Bunch(name='Bildbeschreibung', value=''),
         }
-        """     
-        message = ""        
-        img_desc = factories.ImageDescription(self.dictionary['location'].value)                                
+        """
+        message = ""
+        img_desc = factories.ImageDescription(self.dictionary['location'].value)
         if img_desc.img_maxlength > len(self.dictionary['description'].value):
             img_desc.set_outsource_descriptions(False)
         else:
-            img_desc.set_outsource_descriptions(True)       
+            img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
-        img_desc.set_title(self.dictionary['title'].value)              
-        img_output = img_desc.get_output();             
-        if(len(img_output)==1):         
+        img_desc.set_title(self.dictionary['title'].value)
+        img_output = img_desc.get_output();
+        if(len(img_output)==1):
             self.writeMd(img_output[0])
-        else:   
+        else:
             self.writeMd(img_output[0])
             self.description_extern(img_output[1])
-        if(Debug):          
+        if(Debug):
             console.printMessage(self.view, "Debug image", message)
 
     def writeMd(self,markdown_str):
@@ -512,15 +512,15 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         base = os.path.split(path)[0]
         """
             try to load bilder.md file or create
-        """     
+        """
         fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
         os.close(fd)
-        heading_level_one = '# Bilderbeschreibungen \n\n'       
+        heading_level_one = '# Bilderbeschreibungen \n\n'
         with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf-8") as fd:
             if len(fd.readlines()) <=0:
                 fd.write(heading_level_one)
-        with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf-8") as fd:                                 
-            fd.write("\n"+description) 
+        with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf-8") as fd:
+            fd.write("\n"+description)
 
 
     def on_change(self, input):
@@ -535,20 +535,20 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
 class InsertPageCommand(sublime_plugin.TextCommand):
     """
  { "keys": ["alt+shift+p"], "command": "insert_page"}
-    """   
+    """
     def  run(self, edit):
         self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
-    def on_done_page(self, input):    
+    def on_done_page(self, input):
         if input == -1:
-            return       
+            return
         markdown = '||  - Seite ' +input + ' -'
         self.view.run_command("insert_my_text", {"args":{'text': markdown}})
 
 class ImportCsvTableCommand(sublime_plugin.TextCommand):
     def run(self,edit):
-        self.csvfiles = self.getCsvFile()    
+        self.csvfiles = self.getCsvFile()
         if self.csvfiles and self.view.file_name().endswith("md"):
-            if(settings.get("hints")):              
+            if(settings.get("hints")):
                 messageBox.showMessageBox("Sie wollen eine Tabelle aus einer CSV-Datei hinzufügen. \n"
                 "Wählen Sie im folgenden Dialog die entsprechende Datei aus.")
             self.show_prompt(self.csvfiles)
@@ -566,38 +566,38 @@ class ImportCsvTableCommand(sublime_plugin.TextCommand):
             sublime.error_message(message)
             return
     def show_prompt(self, listFile):
-        self.view.window().show_quick_panel(listFile,self.on_done,sublime.MONOSPACE_FONT)       
+        self.view.window().show_quick_panel(listFile,self.on_done,sublime.MONOSPACE_FONT)
 
     def on_done(self,input):
         if input == -1:
             pass
-        elif input != -1:           
+        elif input != -1:
             self.CreateMarkdownFromCsv(os.path.join(self.table_path,self.csvfiles[input]))
 
     def getCsvFile(self):
-        listFiles = []      
+        listFiles = []
         filename = self.view.file_name()
         self.table_path = ""
         if  filename is not None:
             path = os.path.dirname(self.view.window().active_view().file_name())
-            self.table_path = os.path.join(path,settings.get("table_path"))         
-        for (dirname,dirs, files) in os.walk(self.table_path):                  
-            for file in files:              
+            self.table_path = os.path.join(path,settings.get("table_path"))
+        for (dirname,dirs, files) in os.walk(self.table_path):
+            for file in files:
                 if file.lower().endswith("csv"):
                     listFiles.append(file)
         return listFiles
 
     def CreateMarkdownFromCsv(self,csvFilename):
-        table_markdown = ""     
+        table_markdown = ""
         with open(csvFilename,newline="") as csvfile:
             reader = csv.reader(csvfile, delimiter = " ")
             for i,row in enumerate(reader):
                 content = "".join(row)
                 if i == 1:
-                    # e.g. if there are 2 row_delimiter than there are 3 columns 
+                    # e.g. if there are 2 row_delimiter than there are 3 columns
                     # also 4 pipes '|'
                     columns = content.count(settings.get("row_delimiter"))+ 1
-                    table_markdown += columns*'| -----------'+'|\n'             
+                    table_markdown += columns*'| -----------'+'|\n'
                 table_markdown += "|" + "".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"
         self.view.run_command("insert_my_text", {"args":{'text': table_markdown}})
 
@@ -628,21 +628,21 @@ class InsertTableCommand(sublime_plugin.TextCommand):
                 "Zum Beispiel für eine Tabelle mit 3 Spalten und 5 Reihen geben Sie \n"
                 "3|5 ein!")
             return
-        
+
         #if(    settings.get("table_default_values"))
         markdown =""
         for r in range(0,rows):
             markdown += "|"
-            for c in range(0,cols): 
+            for c in range(0,cols):
                 cellValue = ""
                 if( settings.get("table_default_values")):
                     cn = c + 1 #colnumber
-                    rn = r + 1 #rownumber                   
+                    rn = r + 1 #rownumber
                     cellValue = "Wert für Spalte %d und Zeile %d" % (cn,rn)
                 markdown += cellValue + "|"
-            if(r == 0): 
+            if(r == 0):
                 markdown += "\n" # line break
-                markdown += "|" 
+                markdown += "|"
                 for c in range(0,cols):
                     markdown += "----------|"
             # add separator
@@ -720,7 +720,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
                             self.view.insert(edit, line.a+2*i, markdown_str)
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
-     
+
 
 
 

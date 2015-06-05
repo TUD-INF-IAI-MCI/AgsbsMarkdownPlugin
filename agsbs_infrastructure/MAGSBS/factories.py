@@ -138,7 +138,7 @@ document and in position 1 the string for the outsourcing document.
 
     def get_outsourcing_link(self):
         """Return the link for the case that the picture is excluded."""
-        label = datastructures.gen_id( self.get_title() )
+        label = datastructures.gen_id( _('image description of image')+ " "+ self.get_title() )
         link_text = _('description of image outsourced')
         return '[ ![%s](%s) ](%s#%s)' % (link_text, self.__image_path,
                 self.get_outsource_path(), label)
@@ -151,7 +151,7 @@ document and in position 1 the string for the outsourcing document.
     def __get_outsourced_title(self):
         if(not self.__title):
             raise MissingMandatoryField('"title" must be set for outsourced images.')
-        text = '### ' + _('image description of image').capitalize()
+        text = '### ' + _('image description of image')
         text += ' ' + self.__title
         return text
 
