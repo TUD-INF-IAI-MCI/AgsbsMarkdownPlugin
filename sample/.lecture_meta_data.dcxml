@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata xmlns:MAGSBS="http://elvis.inf.tu-dresden.de" xmlns:dc="http://purl.org/dc/elements/1.1">
+  <dc:source>Unknown</dc:source>
+  <MAGSBS:SourceAuthor>unknown</MAGSBS:SourceAuthor>
+  <dc:format>html</dc:format>
+  <dc:rights>Access limited to members</dc:rights>
+  <dc:date>WS14/15</dc:date>
+  <MAGSBS:pageNumberingGap>5</MAGSBS:pageNumberingGap>
+  <MAGSBS:tocDepth>5</MAGSBS:tocDepth>
+  <MAGSBS:GladTeXopts>-a -d bilder</MAGSBS:GladTeXopts>
+  <dc:creator>voegler</dc:creator>
+  <dc:contributor>AGSBS</dc:contributor>
+  <MAGSBS:appendixPrefix>0</MAGSBS:appendixPrefix>
+  <dc:title>Unknown</dc:title>
+  <dc:language>de</dc:language>
+  <dc:publisher>TU Dresden</dc:publisher>
+</metadata>
