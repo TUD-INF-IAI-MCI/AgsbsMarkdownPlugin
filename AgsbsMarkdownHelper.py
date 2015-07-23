@@ -72,7 +72,12 @@ class Browser():
 
 class InsertMyText(sublime_plugin.TextCommand):
     def run(self, edit, args):
-        self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+        if 'cursor' in args:
+            self.view.insert(edit, args['cursor'][0], args['text'])
+        else:
+            self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+
+
 
 class MessageBox():
     def __init__(self):
@@ -755,14 +760,38 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
             self.input_done()
 
     def input_done(self):
+        screenful = self.view.visible_region()
+        row = self.view.sel()[0].begin()
+        col = self.view.sel()[0].end()
+        target = (row, col)
         footnote_id = "[^" +self.dictionary["footnote_id"].value +"]"
-        (row,col) = self.view.rowcol(self.view.sel()[0].begin())
-        target = self.view.text_point(row, 0)
+        footnote_content = "\n\n"+footnote_id+": " +self.dictionary["footnote_content"].value+"\n"
+
         if not self.view.file_name().endswith("md"):
             return
+        footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+\]{1}:{1}[\w\s\d@?!\"§%&\{\}\[\]]+\n{1}")
         self.view.run_command(
             "insert_my_text", {"args":
             {'text': footnote_id}})
+
+        #print("footnote", footnotes)
+        if not footnotes:
+            print("No footnotes")
+            row = self.view.sel()[0].begin()
+        else:
+            print(footnotes)
+            for note in footnotes:
+                if note.end() > self.view.sel()[0].end():
+                    row = note.end() + 2
+                else:
+                    row = self.view.sel()[0].begin()
+
+
+
+        self.view.run_command(
+            "insert_my_text", {"args":
+            {'text':  footnote_content,
+            "cursor": (row, col)}})
 
 
     def on_change(self, input):
