@@ -722,7 +722,58 @@ class AddTagCommand(sublime_plugin.TextCommand):
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
 
+class InsertFootnoteCommand(sublime_plugin.TextCommand):
+    """docstring for InsertFormulaCommand"""
+    def run(self, edit):
+        self.edit = edit
+        self.counter = 0
+        self.keys = ['footnote_id', 'footnote_content']
+        #create Dictionary
+        self.dictionary = {
+            'footnote_id': Bunch(name='Fußnotenbezeichner', value=''),
+            'footnote_content': Bunch(name='Fußnoteninhalt', value=''),
+        }
+        if(settings.get("hints")):
+            messageBox.showMessageBox("Sie wollen eine Fußnote hinzufügen. \n"
+            "Es sind 2 Eingaben erforderlich: \n"
+            "\t1. Bezeichner der Footnote \n"
+            "\t2. Fußnotentext \n")
+
+        self.show_prompt()
+
+    def show_prompt(self):
+        self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
+
+    def on_done(self, input):
+        value = input
+        if value is not None:
+            self.dictionary[self.keys[self.counter]].value = value
+            self.counter += 1
+        if self.counter < (len(self.dictionary)):
+            self.show_prompt()
+        else:
+            self.input_done()
+
+    def input_done(self):
+        footnote_id = "[^" +self.dictionary["footnote_id"].value +"]"
+        (row,col) = self.view.rowcol(self.view.sel()[0].begin())
+        target = self.view.text_point(row, 0)
+        if not self.view.file_name().endswith("md"):
+            return
+        self.view.run_command(
+            "insert_my_text", {"args":
+            {'text': footnote_id}})
 
 
+    def on_change(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+        if input == -1:
+            return
 
+    def on_cancel(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+        if input == -1:
+            return
 

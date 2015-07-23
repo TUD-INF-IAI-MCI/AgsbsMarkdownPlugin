@@ -288,7 +288,7 @@ l10n with Windows."""
         self.en_de = {'preface':'vorwort', 'appendix':'anhang',
             'table of contents' : 'inhaltsverzeichnis',
             'chapters':'kapitel',
-            'image description of image':'bildbeschreibung von Bild',
+            'image description of image':'Bildbeschreibung von Bild',
             'pages':'Seiten',
             'external image description':'Bildbeschreibung ausgelagert',
             'images':'bilder',
