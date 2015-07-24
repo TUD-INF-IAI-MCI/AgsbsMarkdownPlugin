@@ -543,7 +543,23 @@ class InsertPageCommand(sublime_plugin.TextCommand):
  { "keys": ["alt+shift+p"], "command": "insert_page"}
     """
     def  run(self, edit):
-        self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
+        if settings.get("autoincrement_pagecount"):
+            self.getNextPageNumber()
+            markdown = '\n||  - Seite ' + str(self.getNextPageNumber()) + ' -\n\n'
+            self.view.run_command("insert_my_text", {"args":{'text': markdown}})
+        else:
+            self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
+
+    def getNextPageNumber(self):
+        pagenumbers = self.view.window().active_view().find_all("\|{2}\s*-\s(Seite|Folie|Page|Slide)\s\d*\s-")
+        current_number = 0
+        for number in pagenumbers:
+            cur_line = self.view.line(number)
+            line_text = self.view.substr(cur_line)
+            current_number = re.sub("\|{2}\s*-\s(Seite|Folie|Page|Slide)\s", "", line_text)
+            current_number = re.sub("\s-", "", current_number)
+        return int(current_number) + 1
+
     def on_done_page(self, input):
         if input == -1:
             return
@@ -748,7 +764,7 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
 
     def show_prompt(self):
         default_value = ""
-        if self.keys[self.counter] == "footnote_id":
+        if self.keys[self.counter] == "footnote_id" and settings.get("autoincrement_footnote_id"):
             default_value = str(self.getnextFootnoteID())
         self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, default_value, self.on_done, None, None)
 
