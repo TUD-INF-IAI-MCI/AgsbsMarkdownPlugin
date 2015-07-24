@@ -747,7 +747,10 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
         self.show_prompt()
 
     def show_prompt(self):
-        self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, '', self.on_done, None, None)
+        default_value = ""
+        if self.keys[self.counter] == "footnote_id":
+            default_value = str(self.getnextFootnoteID())
+        self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, default_value, self.on_done, None, None)
 
     def on_done(self, input):
         value = input
@@ -770,7 +773,7 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
         if not self.view.file_name().endswith("md"):
             return
         #footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+\]{1}:{1}[\w\s\d@?!\"§%&\{\}\[\]]+\n{1}")
-        footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+[\]]:\s[\w\d@?!.;:\-_#+]+")
+        footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+[\]]:\s[\w\d@?!.;:\-_#+]+\n{1}")
         self.view.run_command(
             "insert_my_text", {"args":
             {'text': footnote_id}})
@@ -781,7 +784,6 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
             row = self.view.sel()[0].begin()
         else:
             print(footnotes)
-            self.getnextFootnoteID(footnotes)
             for note in footnotes:
                 if note.end() > self.view.sel()[0].end():
                     row = note.end() + 2
@@ -795,18 +797,16 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
             {'text':  footnote_content,
             "cursor": (row, col)}})
 
-    def getnextFootnoteID(self, footnotes):
-        allIds = []
-        for note in footnotes:
+    def getnextFootnoteID(self):
+        footnotes_ids = self.view.window().active_view().find_all("\[{1}\^[\w\d]+[\]]:")
+        current_id = 0
+
+        for note in footnotes_ids:
             cur_line = self.view.line(note)
             line_text = self.view.substr(cur_line)
-            #id = line_text.split(":")[0].replace("[^","").replace("]","")
-            #id = id.lstrip()
-            #id = id.rstrip()
-            #print("id", id)
-            #allIds.append(id)
-            print(line_text)
-        print("allIds", allIds)
+            current_id = line_text.split(":")[0].replace("[^","").replace("]","")
+        # increment current_id
+        return int(current_id) + 1
 
     def on_change(self, input):
         #  if user cancels with Esc key, do nothing

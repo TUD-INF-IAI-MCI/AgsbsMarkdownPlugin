@@ -1,0 +1,5 @@
+# Changes in st3-0.5.0
+
+- shortcut for insertation of
+  - LaTex formulas
+  - footnotes
