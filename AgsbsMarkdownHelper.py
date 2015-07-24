@@ -691,6 +691,9 @@ class AddTagCommand(sublime_plugin.TextCommand):
         screenful = self.view.visible_region()
         (row,col) = self.view.rowcol(self.view.sel()[0].begin())
         target = self.view.text_point(row, 0)
+        firstPos = 0
+        endPos = 0
+        selString = ""
         if not self.view.file_name().endswith("md"):
             return
         if tag in ['em', 'strong','formula','strong+em']:
@@ -715,10 +718,40 @@ class AddTagCommand(sublime_plugin.TextCommand):
                     endPos += len(markdown_str)
 
                     self.view.sel().clear()
-                    if not selString.startswith(markdown_str):
-                        self.view.insert(edit,firstPos,markdown_str)
-                        self.view.insert(edit,endPos,markdown_str)
-                    self.view.sel().add(sublime.Region(cursorPos))
+                else:
+                    view = self.view.window().active_view()
+                    word = view.word(view.sel()[0])
+                    cursorPos = view.sel()[0]
+                    wordUnderCursor  = view.substr(word)
+                    allWords = self.view.window().active_view().find_all(wordUnderCursor)
+                    for word in allWords:
+                        if word.a < cursorPos.a and word.b > cursorPos.a:
+                            firstPos = word.a
+                            endPos = word.b + len(markdown_str)
+                            line = view.line(sublime.Region(firstPos, endPos))
+                    if markdown_str == "**":
+                        word = view.word(sublime.Region(firstPos-2, endPos))
+                        selString = view.substr(word).lstrip().rstrip()
+                    else:
+                        selString = wordUnderCursor.lstrip().rstrip()
+
+                print("selString", len(selString))
+                print("selString", selString)
+                if not selString.startswith(markdown_str):
+                    print("ADD")
+
+
+                    print("markdown_str", markdown_str)
+                    self.view.insert(edit, firstPos, markdown_str)
+                    self.view.insert(edit, endPos, markdown_str)
+                else:
+                    word = wordUnderCursor.replace(markdown_str,"")
+                    print("replace_word", word)
+                    if len(markdown_str) == 1:
+                        self.view.replace(edit, sublime.Region(firstPos, endPos-1), word )
+                    elif len(markdown_str) == 2:
+                        self.view.replace(edit, sublime.Region(firstPos-2, endPos), word )
+
 
         #heading
         elif tag in ['h']:
@@ -742,6 +775,7 @@ class AddTagCommand(sublime_plugin.TextCommand):
                             self.view.insert(edit, line.a+2*i, markdown_str)
         elif tag in ['hr']:
             self.view.insert(edit, target, markdown_str +"\n")
+
 
 class InsertFootnoteCommand(sublime_plugin.TextCommand):
     """docstring for InsertFormulaCommand"""
@@ -835,4 +869,5 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
         #  if canceled, index is returned as  -1
         if input == -1:
             return
+
 
