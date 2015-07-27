@@ -4,6 +4,7 @@
 	"table_default_values": true,
 	"autosave": true,
 	"image_formats": [".jpg",".png",".svg"],
+	"excluded_prefixes": ["eqn"],
 	"autoload_html": true,
 	"table_path": "tabellen",
 	"row_delimiter": ";",
