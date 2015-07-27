@@ -5,7 +5,7 @@
   - footnotes
 
 - autoincrement of
-  - page number
+  - page number (see issue #4)
   - footnote id
 
 - add settings for auto increment of page number and footnote_id

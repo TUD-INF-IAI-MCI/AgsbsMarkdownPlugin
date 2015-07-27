@@ -76,6 +76,10 @@
                                                 "caption": "Link hinzufügen"
                                             },
                                             {
+                                                "command": "insert_footnote",
+                                                "caption": "Footnote hinzufügen"
+                                            },
+                                            {
                                                 "command": "create_internal_link",
                                                 "caption": "Internen Link hinzufügen"
                                             },
