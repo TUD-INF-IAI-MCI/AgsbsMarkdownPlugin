@@ -216,10 +216,9 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 
     def input_done(self):
         path = sublime.active_window().folders()[0]
-
         cwd = os.getcwd()
         os.chdir(path)
-        builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
+        builder = filesystem.init_lecture(path, self.dictionary['chapter_count'].value,
                 lang=self.dictionary['language'].value)
         builder.set_has_preface(self.dictionary['preface'].value)
         builder.generate_structure()
@@ -448,9 +447,11 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         listFiles = []
         filename = self.view.file_name()
         dir = os.path.dirname(filename)
+        excluded_prefixes = settings.get("excluded_prefixes")
+        print("excluded_prefixes ", excluded_prefixes)
         for (dirname,dirs, files) in os.walk(dir):
             for file in files:
-                if file.endswith(tuple(imageFormats)):
+                if (file.endswith(tuple(imageFormats)) and not(file.startswith(tuple(excluded_prefixes)))):
                     parentname = os.path.basename(os.path.normpath(dirname))
                     listFiles.append(parentname +"/" + file)
         return listFiles
