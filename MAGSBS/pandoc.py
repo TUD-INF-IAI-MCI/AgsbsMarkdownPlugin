@@ -13,6 +13,7 @@ import tempfile, os, subprocess
 from . import config
 from . import contentfilter
 from .datastructures import decode
+from . import errors
 from . import filesystem
 from . import mparser
 
@@ -106,7 +107,8 @@ def execute(args, stdin=None):
                 msg = '\n'.join(map(decode, text))
                 raise subprocess.SubprocessError(' '.join(args) + ': ' + msg)
         except FileNotFoundError as e:
-            raise subprocess.SubprocessError(e)
+            msg = str(args[0]) + ': ' + str(e)
+            raise subprocess.SubprocessError(msg)
     return decode(text[0])
 
 
@@ -192,7 +194,7 @@ class HtmlConverter(OutputGenerator):
         # check whether "Math" occurs and therefore if GladTeX needs to be run
         need_gladtex = contentfilter.pandoc_ast_parser( jsonstr,
                 contentfilter.has_math)
-        if isinstance(need_gladtex, list and len(need_gladtex) != 0:
+        if isinstance(need_gladtex, list) and len(need_gladtex) != 0:
             use_gladtex = need_gladtex[0]
             outputf = base_name + '.htex'
             pandoc_args.append('--gladtex')
@@ -284,8 +286,10 @@ to the output, handles errors and checks for the correct encoding."""
                     json_ast = contentfilter.jsonfilter(json_ast, filter,
                             self.conf['format'] )
                 conv.convert(json.dumps(json_ast), title, base_name)
-        except:
-            raise
+        except errors.MAGSBS_error as e:
+            # args[0] is message for MAGSBS_error
+            e.args = ('in file {}: {}'.format(file_name, e.args[0]),)
+            raise e
         finally:
             conv.cleanup()
 

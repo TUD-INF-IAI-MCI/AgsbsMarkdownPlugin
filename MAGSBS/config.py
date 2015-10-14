@@ -13,7 +13,7 @@ from .errors import ConfigurationError, ConfigurationNotFoundError
 if not (sys.platform.lower().startswith("win")):
     import pwd
 
-VERSION = '0.2'
+VERSION = '0.3'
 ## default values
 CONF_FILE_NAME = ".lecture_meta_data.dcxml"
 # as a regular expression all kinds of token which can mark a page
@@ -122,7 +122,7 @@ one instance at a time exists.
         else: # full name with the unix way
             self['editor'] = pwd.getpwuid(os.getuid())[4]
             # on some systems, real name end with commas, strip those
-            while(self['editor'].endswith(',')):
+            while self['editor'].endswith(','):
                 self['editor'] = self['editor'][:-1]
         self['semesterofedit'] = get_semester()
         self['lecturetitle'] = 'Unknown'
