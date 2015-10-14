@@ -501,7 +501,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         else:
             img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
-        img_desc.set_title(self.dictionary['title'].value)
+        img_desc.set_title(self.dictionary['title'].value.strip())
         img_output = img_desc.get_output();
         if(len(img_output)==1):
             self.writeMd(img_output[0])
