@@ -622,7 +622,9 @@ class ImportCsvTableCommand(sublime_plugin.TextCommand):
                     columns = content.count(settings.get("row_delimiter"))+ 1
                     table_markdown += columns*'| -----------'+'|\n'
                 table_markdown += "|" + "".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"
+        self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- imported table file " +csvFilename +"-->\n\n"}})
         self.view.run_command("insert_my_text", {"args":{'text': table_markdown}})
+        self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- end imported table file " +csvFilename +" -->\n\n"}})
 
 """
 { "keys": ["alt+shift+t"], "command": "insert_table"}
