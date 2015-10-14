@@ -9,14 +9,14 @@ import collections
 import os
 import posixpath
 
-<<<<<<< HEAD
+
 from . import mparser as mparser
-=======
->>>>>>> 7df9990ec5b5884a13cff9a0febec80a5e4edebb
+
 from . import config
 from . import datastructures
 from . import errors
 from . import mparser
+
 _ = config._
 #pylint: disable=redefined-builtin
 
