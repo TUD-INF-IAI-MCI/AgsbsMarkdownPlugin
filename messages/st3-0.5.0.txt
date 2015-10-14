@@ -1,0 +1,12 @@
+# Changes in st3-0.5.0
+
+- shortcut for insertation of
+  - LaTex formulas
+  - footnotes
+- autoincrement of
+  - page number (see issue #4)
+  - footnote id
+- add settings for auto increment of page number and footnote_id
+- string can be formatted without selection (see issue #3)
+- some bug fixes
+- add comment for imported table

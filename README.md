@@ -8,18 +8,18 @@ Latest Release for Sublime Text 3 is st3-0.3.1
 This is a sublime plugin which is used in our working group. Our working group is transcribing study materials
 for blind and visual impaired students ([Elvis - german Website](http://elvis.inf.tu-dresden.de)).
 
-After the creation of the Markdown files a customized pandoc converter is used for the transformation to HTML 
+After the creation of the Markdown files a customized pandoc converter is used for the transformation to HTML
 ([pandoc-website](http://johnmacfarlane.net/pandoc/))
 
 ## The Plugin
 
-The plugin offered different functions to fulfil our guidelines, add Markdown content and 
+The plugin offered different functions to fulfil our guidelines, add Markdown content and
 helps unknown transcribers to create markdown-files.
 
 ### The directory structure of material
 
 The shortcut F2 opens the dialog for the input of the title, chaptercount, language, preface.
-You have the separats the values by | . 
+You have the separats the values by | .
 sampleBook|3|en|0
 The plugin creates the following folders and files:
 

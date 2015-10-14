@@ -16,10 +16,10 @@ Refactoring for support of Sublime Text 3
 * add error_messages for
 	+ no picture is stored in subfolder images
 	+ no picture is selected
-	+ empty inputs 
+	+ empty inputs
 * add menu for (see file Main.sublime-menu)
 	+ formating elements
-	+ inserting elements		
+	+ inserting elements
 		- image
 		- link
 		- table
@@ -44,5 +44,4 @@ Refactoring for support of Sublime Text 3
 
 
 
-	
-	
+

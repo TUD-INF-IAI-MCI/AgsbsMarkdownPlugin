@@ -4,6 +4,10 @@
 """
 This module provides some extensions to the python-pandoc API as well as a few
 custom filters for the extended version of MarkDown.
+Additionally, a parser is introduced for documents with LaTeX formulas. This one
+pre-parses a document and changes all inline equations to displaymath equations.
+This way Pandoc preserves the line breaks which ware curcial for alternative
+image descriptions.
 """
 
 from ..lib import pandocfilters as pandocfilters
@@ -11,6 +15,7 @@ import json
 import sys, subprocess, re
 from . import config
 from . import datastructures
+from .errors import StructuralError
 
 
 def html(x):
@@ -47,8 +52,8 @@ numbering information."""
     if(modify_ast):
         if(not (format == 'html' or format == 'html5')):
             return
-    if(key == 'Para'):
-        if(len(value)>0):
+    if key == 'Para':
+        if len(value)>0:
             text = value[0]['c']
             if(type(text) == str):
                 if(text.startswith('||')):
@@ -58,10 +63,19 @@ numbering information."""
                         text = text[2:]
                         id = datastructures.gen_id( text )
                         if(modify_ast):
-                            return html( generate_link( text, id ) )
+                            return html(generate_link(text, id))
                         else:
                             return (text, id)
 
+def suppress_captions(key, value, format, meta, modify_ast=True):
+    """Images on a paragraph of its own get a caption, suppress that."""
+    if modify_ast and not format in ['html', 'html5']:
+        return
+    if key == 'Image':
+        # value consists of a list with two items, second contains ('bildpath',
+                # x) where x is either 'fig' for a proper figure with caption or
+        # '' (which is what is desired)
+        value[1][1] = ''
 
 def heading_extractor(key, value, format, meta, modify_ast=False):
     """Extract all headings from the JSon AST."""
@@ -70,15 +84,12 @@ def heading_extractor(key, value, format, meta, modify_ast=False):
         return (value[0], pandocfilters.stringify( value ))
 
 
-def jsonfilter(text, action, format='html'):
-    """NOTE: this is a copy from pandocfilters, it uses also the infrastructure
-    of this module, but doesn't read from stdin (but from an argument) and
-    doesn't write to stdout.
-    Converts an action into a filter that reads a JSON-formatted
-    pandoc document from stdin, transforms it by walking the tree
-    with the action, and returns a new JSON-formatted pandoc document
-    to stdout.  The argument is a function action(key, value, format, meta),
-    where key is the type of the pandoc object (e.g. 'Str', 'Para'),
+def jsonfilter(doc, action, format='html'):
+    """Run a filter on the given json (parameter doc) with the specified action
+    (parameter action). Return the altered structure (effectively a copy).
+    The action argument is effectively a method:  The argument is a function
+    action(key, value, format, meta), where key is the type of the pandoc object
+    (e.g. 'Str', 'Para'),
     value is the contents of the object (e.g. a string for 'Str',
     a list of inline elements for 'Para'), format is the target
     output format (which will be taken for the first command line
@@ -89,9 +100,8 @@ def jsonfilter(text, action, format='html'):
     the list to which the target object belongs.  (So, returning an
     empty list deletes the object.)
     """
-    doc = json.loads( text )
     altered = pandocfilters.walk(doc, action, format, doc[0]['unMeta'])
-    return json.dumps( altered )
+    return altered
 
 
 def run_pandoc(text):
@@ -118,4 +128,106 @@ def pandoc_ast_parser(text, action):
             result.append( res )
     pandocfilters.walk(doc, go, "", doc[0]['unMeta'])
     return result
+
+
+class Text:
+    """A text chunk."""
+    def __init__(self, text):
+        self.text = text
+    def __repr__(self):
+        return 'T<%s>' % self.text
+    def __str__(self):
+        return self.text
+
+class Formula:
+    """A formula, represented as displaymath by __str__."""
+    def __init__(self, formula):
+        self.formula = formula
+    def __str__(self):
+        return '$$%s$$' % self.formula
+    def __repr__(self):
+        return 'F<%s>' % self.__str__()
+
+class InlineToDisplayMath:
+    """Parse math formulas and modify them to be always displaymath so that
+    Pandoc will preserve white space."""
+    def __init__(self, document):
+        self.__document = document
+        self.__pieces = []
+
+    def tokenize(self, separator="$", escape='\\'):
+        """Tokenize a string, correctly treating escaped sequences.
+        Each token is a tuple with a line number where this token started and
+        the token itself."""
+        encountered = False
+        token = ''
+        result = []
+        line_number = 1
+        last_token_started_at= 1
+        for c in self.__document:
+            if c == '\n':
+                line_number += 1
+            if not encountered:
+                if c == escape:
+                    encountered = True
+                elif c == separator:
+                    result.append((last_token_started_at, token))
+                    token = ''
+                    last_token_started_at = line_number
+                else:
+                    token += c
+            else: # encountered:
+                if token != separator: # wasn't a escape \, so add it literally
+                    token += '\\'
+                token += c
+                encountered = False
+        result.append((last_token_started_at, token))
+        return result
+
+    def parse(self):
+        """Parse the document string into chunks of Text and Formula's.
+Algorithm (ignoring $$-enclosed formulas); the position in the text is
+implicitly remembered.
+
+1.  Find dollar. If followed by dollar, tread the text before and the two text
+    dollars as text and save it. Continue on this vey same step.
+    - if no dollar found: 5.
+2.  Find the matching dollar sign.
+3.  Text between the two dollars is added as Formula() to self.__pieces.
+4.  Position is updated, start from one.
+5.  Save current position until end as Text() and exit.
+"""
+        ismath = False # set to true after a token wasn't formula, (so is alternating)
+        for lnum, token in self.tokenize():
+            if token == '':
+                continue # ignore, caused by $$ (empty token)
+            token = token.replace('$', '\\$')
+            if ismath:
+                self.__pieces.append('$${}$$'.format(token))
+                ismath = False
+            else: # is ordinary text, if not last_token_empty
+                self.__pieces.append(token)
+                ismath = True
+        if not ismath: # if last was text, ismath has been set to true because
+                    # expecting another math; if last was math it is complicated
+                    # and again negated
+            # try to find a token which is math and contains \n\n; math may not
+            # have a paragraph break, possible error source
+            ismath = False # set to true after a token wasn't formula, (so is alternating)
+            for lnum, token in self.tokenize():
+                if token == '':
+                    continue # ignore, caused by $$ (empty token)
+                token = token.replace('$', '\\$')
+                if ismath and '\n\n' in token:
+                    raise StructuralError(("Somewhere before or after line {}"
+                            " a math environment wasn't ended correctly.").
+                            format(lnum))
+                ismath = not ismath
+            raise StructuralError(("Somewhere in the document a $$-"
+                "environment wasn't closed."))
+
+    def get_document(self):
+        """Return the document as a string."""
+        return ''.join(map(str, self.__pieces))
+
 

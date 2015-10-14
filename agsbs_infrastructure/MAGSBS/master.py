@@ -1,5 +1,4 @@
 """For documentation about this module, please refer to its classs master."""
-from . import errors
 from . import config
 from . import pandoc
 from . import filesystem
@@ -28,6 +27,7 @@ files are converted."""
 
     def get_roots(self):
         return self._roots
+
     def __findroot(self, path):
         roots = []
         dirs = [path]
@@ -71,7 +71,7 @@ found and there are MarkDown files."""
             # create table of contents
             c = filesystem.create_index( "." )
             c.walk()
-            if( not c.is_empty() ):
+            if not c.is_empty():
                 index = c.get_index()
                 md_creator = factories.index2markdown_TOC(index)
                 with open(_("index").lower() + ".md", 'w', encoding="utf-8") as file:
@@ -79,14 +79,8 @@ found and there are MarkDown files."""
 
             for directory, dlist, flist in filesystem.get_markdown_files( ".", True ):
                 os.chdir(directory)
-                for f in flist:
-                    p = pandoc.pandoc()
-                    try:
-                        p.convert( f )
-                    except errors.SubprocessError as interposeError:
-                        raise errors.SubprocessError("Error while converting "+\
-                                os.path.join(directory, f) + ': ' + \
-                                interposeError.args[0])
+                p = pandoc.pandoc()
+                p.convert_files(flist)
                 os.chdir(os.path.join(cwd, root))
             os.chdir(cwd)
 

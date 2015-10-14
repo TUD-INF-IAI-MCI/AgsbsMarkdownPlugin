@@ -72,7 +72,12 @@ class Browser():
 
 class InsertMyText(sublime_plugin.TextCommand):
     def run(self, edit, args):
-        self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+        if 'cursor' in args:
+            self.view.insert(edit, args['cursor'][0], args['text'])
+        else:
+            self.view.insert(edit, self.view.sel()[0].begin(), args['text'])
+
+
 
 class MessageBox():
     def __init__(self):
@@ -211,10 +216,9 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
 
     def input_done(self):
         path = sublime.active_window().folders()[0]
-
         cwd = os.getcwd()
         os.chdir(path)
-        builder = filesystem.init_lecture(self.dictionary['title'].value, self.dictionary['chapter_count'].value,
+        builder = filesystem.init_lecture(path, self.dictionary['chapter_count'].value,
                 lang=self.dictionary['language'].value)
         builder.set_has_preface(self.dictionary['preface'].value)
         builder.generate_structure()
@@ -314,16 +318,16 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         # just til gladtex is working well
 
         if(settings.get('use_gladtex')):
-            p = pandoc.pandoc(use_gladtex = True)
+            p = pandoc.pandoc()
         else:
-            p = pandoc.pandoc(use_gladtex = False)
+            p = pandoc.pandoc()
         try:
-            p.convert(file_name)
-        except FileNotFoundError:
+            p.convert_file(file_name)
+        except FileNotFoundError as ex_message:
             sublime.error_message("Sie müssen Pandoc installieren.")
             return
         if(autoload_html):
-            print("open in browser",file_name.replace(".md",".html") )
+            print("open in browser",file_name.replace(".md",".html"))
             Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
@@ -345,6 +349,7 @@ class CreateAllCommand(sublime_plugin.TextCommand):
             parent = os.path.join(parent,"inhalt.html")
             print("open in browser",parent )
             Browser(parent)
+        m = None
 
 
 class InsertLinkPanelCommand(sublime_plugin.TextCommand):
@@ -442,9 +447,10 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         listFiles = []
         filename = self.view.file_name()
         dir = os.path.dirname(filename)
+        excluded_prefixes = settings.get("excluded_prefixes")
         for (dirname,dirs, files) in os.walk(dir):
             for file in files:
-                if file.endswith(tuple(imageFormats)):
+                if (file.endswith(tuple(imageFormats)) and not(file.startswith(tuple(excluded_prefixes)))):
                     parentname = os.path.basename(os.path.normpath(dirname))
                     listFiles.append(parentname +"/" + file)
         return listFiles
@@ -494,7 +500,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         else:
             img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
-        img_desc.set_title(self.dictionary['title'].value)
+        img_desc.set_title(self.dictionary['title'].value.strip())
         img_output = img_desc.get_output();
         if(len(img_output)==1):
             self.writeMd(img_output[0])
@@ -537,7 +543,23 @@ class InsertPageCommand(sublime_plugin.TextCommand):
  { "keys": ["alt+shift+p"], "command": "insert_page"}
     """
     def  run(self, edit):
-        self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
+        if settings.get("autoincrement_pagecount"):
+            self.getNextPageNumber()
+            markdown = '\n||  - Seite ' + str(self.getNextPageNumber()) + ' -\n\n'
+            self.view.run_command("insert_my_text", {"args":{'text': markdown}})
+        else:
+            self.view.window().show_input_panel("Seitenzahl", "", self.on_done_page, None,None)
+
+    def getNextPageNumber(self):
+        pagenumbers = self.view.window().active_view().find_all("\|{2}\s*-\s(Seite|Folie|Page|Slide)\s\d*\s-")
+        current_number = 0
+        for number in pagenumbers:
+            cur_line = self.view.line(number)
+            line_text = self.view.substr(cur_line)
+            current_number = re.sub("\|{2}\s*-\s(Seite|Folie|Page|Slide)\s", "", line_text)
+            current_number = re.sub("\s-", "", current_number)
+        return int(current_number) + 1
+
     def on_done_page(self, input):
         if input == -1:
             return
@@ -599,7 +621,9 @@ class ImportCsvTableCommand(sublime_plugin.TextCommand):
                     columns = content.count(settings.get("row_delimiter"))+ 1
                     table_markdown += columns*'| -----------'+'|\n'
                 table_markdown += "|" + "".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"
+        self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- imported table file " +csvFilename +"-->\n\n"}})
         self.view.run_command("insert_my_text", {"args":{'text': table_markdown}})
+        self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- end imported table file " +csvFilename +" -->\n\n"}})
 
 """
 { "keys": ["alt+shift+t"], "command": "insert_table"}
@@ -669,6 +693,10 @@ class AddTagCommand(sublime_plugin.TextCommand):
         screenful = self.view.visible_region()
         (row,col) = self.view.rowcol(self.view.sel()[0].begin())
         target = self.view.text_point(row, 0)
+        firstPos = 0
+        endPos = 0
+        selString = ""
+        wordUnderCursor = ""
         if not self.view.file_name().endswith("md"):
             return
         if tag in ['em', 'strong','formula','strong+em']:
@@ -693,10 +721,33 @@ class AddTagCommand(sublime_plugin.TextCommand):
                     endPos += len(markdown_str)
 
                     self.view.sel().clear()
-                    if not selString.startswith(markdown_str):
-                        self.view.insert(edit,firstPos,markdown_str)
-                        self.view.insert(edit,endPos,markdown_str)
-                    self.view.sel().add(sublime.Region(cursorPos))
+                else:
+                    view = self.view.window().active_view()
+                    word = view.word(view.sel()[0])
+                    cursorPos = view.sel()[0]
+                    wordUnderCursor  = view.substr(word)
+                    allWords = self.view.window().active_view().find_all(wordUnderCursor)
+                    for word in allWords:
+                        if word.a <= cursorPos.a and word.b >= cursorPos.a:
+                            firstPos = word.a
+                            endPos = word.b + len(markdown_str)
+                            line = view.line(sublime.Region(firstPos, endPos))
+
+                    if markdown_str == "**":
+                        word = view.word(sublime.Region(firstPos-2, endPos))
+                        selString = view.substr(word).lstrip().rstrip()
+                    else:
+                        selString = wordUnderCursor.lstrip().rstrip()
+                if not selString.startswith(markdown_str):
+                    self.view.insert(edit, firstPos, markdown_str)
+                    self.view.insert(edit, endPos, markdown_str)
+                else:
+                    word = wordUnderCursor.replace(markdown_str,"")
+                    if len(markdown_str) == 1:
+                        self.view.replace(edit, sublime.Region(firstPos, endPos-1), word )
+                    elif len(markdown_str) == 2:
+                        self.view.replace(edit, sublime.Region(firstPos-2, endPos), word )
+
 
         #heading
         elif tag in ['h']:
@@ -722,6 +773,97 @@ class AddTagCommand(sublime_plugin.TextCommand):
             self.view.insert(edit, target, markdown_str +"\n")
 
 
+class InsertFootnoteCommand(sublime_plugin.TextCommand):
+    """docstring for InsertFormulaCommand"""
+    def run(self, edit):
+        self.edit = edit
+        self.counter = 0
+        self.keys = ['footnote_id', 'footnote_content']
+        #create Dictionary
+        self.dictionary = {
+            'footnote_id': Bunch(name='Fußnotenbezeichner', value=''),
+            'footnote_content': Bunch(name='Fußnoteninhalt', value=''),
+        }
+        if(settings.get("hints")):
+            messageBox.showMessageBox("Sie wollen eine Fußnote hinzufügen. \n"
+            "Es sind 2 Eingaben erforderlich: \n"
+            "\t1. Bezeichner der Footnote \n"
+            "\t2. Fußnotentext \n")
 
+        self.show_prompt()
+
+    def show_prompt(self):
+        default_value = ""
+        if self.keys[self.counter] == "footnote_id" and settings.get("autoincrement_footnote_id"):
+            default_value = str(self.getnextFootnoteID())
+        self.view.window().show_input_panel(self.dictionary[self.keys[self.counter]].name, default_value, self.on_done, None, None)
+
+    def on_done(self, input):
+        value = input
+        if value is not None:
+            self.dictionary[self.keys[self.counter]].value = value
+            self.counter += 1
+        if self.counter < (len(self.dictionary)):
+            self.show_prompt()
+        else:
+            self.input_done()
+
+    def input_done(self):
+        screenful = self.view.visible_region()
+        row = self.view.sel()[0].begin()
+        col = self.view.sel()[0].end()
+        target = (row, col)
+        footnote_id = "[^" +self.dictionary["footnote_id"].value +"]"
+        footnote_content = "\n\n"+footnote_id+": " +self.dictionary["footnote_content"].value+"\n"
+
+        if not self.view.file_name().endswith("md"):
+            return
+        #footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+\]{1}:{1}[\w\s\d@?!\"§%&\{\}\[\]]+\n{1}")
+        footnotes = self.view.window().active_view().find_all("\[{1}\^[\w\d]+[\]]:\s[\w\d@?!.;:\-_#+]+\n{1}")
+        self.view.run_command(
+            "insert_my_text", {"args":
+            {'text': footnote_id}})
+
+        #print("footnote", footnotes)
+        if not footnotes:
+
+            row = self.view.sel()[0].begin()
+        else:
+            print(footnotes)
+            for note in footnotes:
+                if note.end() > self.view.sel()[0].end():
+                    row = note.end() + 2
+                else:
+                    row = self.view.sel()[0].begin()
+
+
+
+        self.view.run_command(
+            "insert_my_text", {"args":
+            {'text':  footnote_content,
+            "cursor": (row, col)}})
+
+    def getnextFootnoteID(self):
+        footnotes_ids = self.view.window().active_view().find_all("\[{1}\^[\w\d]+[\]]:")
+        current_id = 0
+
+        for note in footnotes_ids:
+            cur_line = self.view.line(note)
+            line_text = self.view.substr(cur_line)
+            current_id = line_text.split(":")[0].replace("[^","").replace("]","")
+        # increment current_id
+        return int(current_id) + 1
+
+    def on_change(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+        if input == -1:
+            return
+
+    def on_cancel(self, input):
+        #  if user cancels with Esc key, do nothing
+        #  if canceled, index is returned as  -1
+        if input == -1:
+            return
 
 

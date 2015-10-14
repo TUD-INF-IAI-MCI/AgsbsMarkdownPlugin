@@ -16,79 +16,83 @@
                         "children":
                         [
                             {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/User/Agsbs Markdown Helper.sublime-settings"                                
+                                "command": "open_file",
+                                "args": {"file": "${packages}/User/Agsbs Markdown Helper.sublime-settings"
                                 },
-                                "caption": "Setting - User"                                
+                                "caption": "Setting - User"
                             },
                             {
-                                "command": "open_file", 
-                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"                                
+                                "command": "open_file",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"
                                 },
                                 "caption": "Setting - Default"
                             },
                             { "caption": "-" },
                             {
-                                "command": "open_file", 
+                                "command": "open_file",
                                 "args": {"file": "${packages}/Agsbs Markdown Helper/Default.sublime-keymap",
                                 },
 
                                 "caption": "Shortcuts"
                             },
                             {   "caption": "Tastenkürzel",
-                                "children":                                
+                                "children":
                                 [
                                     {
                                         "caption": "MATUC Befehle",
                                         "children": [
-                                                {                                                
-                                                "command": "create_structure",                                                
+                                                {
+                                                "command": "create_structure",
                                                 "caption": "Struktur generieren"
                                                 },
-                                                {                                                
-                                                "command": "check_with_mk",                                                
+                                                {
+                                                "command": "check_with_mk",
                                                 "caption": "Datei überprüfen",
                                                 "args":{"function": "checkFile"}
                                                 },
-                                                {                                                
-                                                "command": "check_with_mk",                                                
+                                                {
+                                                "command": "check_with_mk",
                                                 "caption": "Alle Dateien überprüfen",
                                                 "args":{"function": "checkAll"}
                                                 },
-                                                {                                                
-                                                "command": "create_html_file",                                                
+                                                {
+                                                "command": "create_html_file",
                                                 "caption": "HTML-Datei generieren"
-                                                },{                                                
-                                                "command": "create_all",                                                
+                                                },{
+                                                "command": "create_all",
                                                 "caption": "Alle HTML-Dateien generieren"
-                                                }                                                
+                                                }
                                         ]
                                     },
                                     {
                                         "caption": "Element hinzufügen",
                                         "children":[
-                                            {                                                
-                                                "command": "insert_image_panel",                                                
+                                            {
+                                                "command": "insert_image_panel",
                                                 "caption": "Bild hinzufügen"
                                             },
                                             {
-                                                "command": "insert_link_panel",                                                
+                                                "command": "insert_link_panel",
                                                 "caption": "Link hinzufügen"
                                             },
                                             {
-                                                "command": "create_internal_link",                                                
+                                                "command": "insert_footnote",
+                                                "caption": "Footnote hinzufügen"
+                                            },
+                                            {
+                                                "command": "create_internal_link",
                                                 "caption": "Internen Link hinzufügen"
                                             },
                                             {
-                                                "command": "insert_table",                                                
+                                                "command": "insert_table",
                                                 "caption": "Tabelle hinzufügen"
                                             },
                                             {
-                                                "command": "import_csv_table",                                                
+                                                "command": "import_csv_table",
                                                 "caption": "CSV-Tabelle importieren"
                                             },
                                             {
-                                                "command": "insert_page",                                                
+                                                "command": "insert_page",
                                                 "caption": "Seite hinzufügen"
                                             }
 
@@ -97,8 +101,8 @@
                                     {
                                         "caption": "Formatierung",
                                         "children":[
-                                            {                                                    
-                                                "command" : "add_tag",                                                
+                                            {
+                                                "command" : "add_tag",
                                                 "caption": "fett",
                                                 "args": {"tag": "strong", "markdown_str": "**"}
                                             },

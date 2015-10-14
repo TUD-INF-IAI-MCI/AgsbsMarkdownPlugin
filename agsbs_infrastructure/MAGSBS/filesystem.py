@@ -1,10 +1,22 @@
+# This is free software, licensed under the LGPL v3. See the file "COPYING" for
+# details.
+#
+# (c) 2015 Sebastian Humenda <shumenda |at|gmx |dot| de>
+
 """Everything file system related goes in here."""
 
-import os, collections
+import collections
+import os
+import posixpath
+
 
 from . import mparser as mparser
+
 from . import config
+from . import datastructures
 from . import errors
+from . import mparser
+
 _ = config._
 #pylint: disable=redefined-builtin
 
@@ -47,9 +59,9 @@ Files picked up: ending on configured file endings."""
 
     def add_blacklisted(self, new):
         self.black_list += new
-    def set_endings(self, e):
-        assert isinstance(e, list) or isinstance(e, tuple)
-        self.endings = e
+
+    def set_endings(self, endings):
+        self.endings = [(e[1:] if e.startswith('.') else e)  for e in endings]
 
 
     def set_ignore_non_chapter_prefixed(self, x):
@@ -73,8 +85,8 @@ Files picked up: ending on configured file endings."""
         return False
 
     def walk(self):
-        if(not os.path.exists(self.path) ):
-            raise OSError("Specified directory %s does not exist." % dir)
+        if not os.path.exists(self.path):
+            raise OSError("Specified directory %s does not exist." % self.path)
         elif os.path.isfile(self.path):
             path, file = os.path.split(self.path)
             if path == '':
@@ -133,11 +145,14 @@ def is_lecture_root(directory):
         return True
     return False
 
-def fn2targetformat( fn, fmt ):
-    """Alters a path to have the file name extension of the target format."""
-    if( not fn.endswith('.md') ):
+def local_url2target_url( fn, fmt ):
+    """Rewrite a local MarkDown file to a URL to be use din an HTML file. The md
+    file extension is replaced by html and all backslashes are replaced by
+    forward slashes."""
+    if not fn.endswith('.md'):
         raise ValueError("File must end on .md")
-    return fn.replace('.md', '.'+fmt )
+    fn = fn.replace('.md', '.' + fmt)
+    return posixpath.join(*fn.split('\\'))
 
 
 class create_index():
@@ -170,7 +185,7 @@ By calling the function, the actual index is build."""
                 headings = []
                 if(os.path.split(directory)[-1].startswith("anh") ):
                     for heading in m.get_headings():
-                        heading.set_type( "appendix" )
+                        heading.set_type(datastructures.Heading.Type.APPENDIX)
                         headings.append( heading )
                 else:
                     headings = m.get_headings()
@@ -203,9 +218,9 @@ have for the pages."""
     NAVIGATION_BEGIN = '<!-- page navigation -->'
 
     def __init__(self, dir):
-        if( not os.path.exists( dir ) ):
+        if not os.path.exists(dir):
             raise OSError("The directory \"%s\" doesn't exist." % dir)
-        if( not is_lecture_root( dir ) ):
+        if not is_lecture_root(dir):
             raise errors.StructuralError("This command must be run from " + \
                     "the lecture root!")
         self.__dir = dir
@@ -215,6 +230,7 @@ have for the pages."""
         self.__lang = c['language']
         self.__fmt = c['format']
         self.linebreaks = '\n'
+
     def __preorder(self):
         preface = []
         main = []
@@ -237,12 +253,11 @@ have for the pages."""
             if stop:
                 continue
             for t in config.VALID_APPENDIX_BGN:
-                if( tmp.startswith( t) ):
+                if tmp.startswith(t):
                     appendix.append( (dir, dlist, flist) )
                     stop = True
                     break
         return preface + main + appendix
-
 
     def iterate(self):
         """Iterate over the files and call self.trail_nav and self.gen_nav. Write
@@ -252,22 +267,22 @@ back the file."""
         files = []
         for directoryname, directory_list, file_list in self.__preorder():
             for file in file_list:
-                files.append( directoryname + os.sep + file )
+                files.append(directoryname + os.sep + file)
         has_prev = None
         has_next = None
         for pos, file in enumerate( files ):
-            if(pos):
-                has_prev = files[ pos -1 ]
-            if(pos == (len(files)-1)):
+            if pos:
+                has_prev = files[pos - 1]
+            if pos == (len(files)-1):
                 has_next = None
             else:
                 has_next = files[ pos + 1 ]
             data = open(file, 'r', encoding='utf-8').read()
             # guess line breaks
-            if(data.find('\r\n')>=0):
+            if data.find('\r\n')>=0:
                 self.linebreaks = '\r\n'
             else:
-                if(len(data.split('\n')) < 2):
+                if len(data.split('\n')) < 2:
                     self.linebreaks = '\r'
                 else:
                     self.linebreaks = '\n'
@@ -298,10 +313,10 @@ and end again with
 
     def gen_nav(self, page, file_name, has_prev, has_next):
         """Generate language-specific site navigation."""
-        if(has_prev):
-            has_prev = fn2targetformat( has_prev, self.__fmt )
+        if has_prev:
+            has_prev = local_url2target_url( has_prev, self.__fmt )
         if(has_next):
-            has_next = fn2targetformat(has_next, self.__fmt)
+            has_next = local_url2target_url(has_next, self.__fmt)
         newpage = []
         m = mparser.SimpleMarkdownParser(page, self.__dir, file_name)
         m.parse()
@@ -424,16 +439,65 @@ Initialize basic configuration as well."""
             self.__create_chapter('anh', index, False)
         os.chdir(cwd)
 
-def file2paragraphs(lines):
+def newline_wrapper(lines):
+    """Wrapper which wraps around an iterator emitting lines of text. If a line
+    ends on \\, that will be joined with the next line before it is returned.
+
+    If a line has been joined, another empty line is inserted to retain the line
+    number count. They are inserted at the end of the just encountered paragraph
+    to not cause confusion.
+
+    This method is useful for Mistkerl checkers so they don't need to bother
+    about line continuation
+    This method behaves as an iterator."""
+    has_next = True
+    myiter = iter(lines)
+    lines_to_insert = 0
+    insert_blank_lines_now = False
+    while has_next:
+        try: # try to fetch next line
+            line = next(myiter)
+        except StopIteration:
+            has_next = False
+            break
+        # join as long as a \ is at the end
+        while line.rstrip().endswith('\\'): # rstrip strips \n
+            line = line.rstrip()[:-1] + ' ' # strip \
+            try:
+                nextline = next(myiter)
+            except StopIteration:
+                break
+            lines_to_insert += 1
+            if nextline.strip() == '': # empty lines don't get appended at the end of previous line
+                insert_blank_lines_now = True
+                line = '' # reset it to '' so that following code inserts blank lines
+                break
+            line += nextline
+        # return line
+        yield line
+        if insert_blank_lines_now:
+            insert_blank_lines_now = False
+            line = '' # trigger line insertion for missing joined lines
+        if lines_to_insert > 0 and line.strip() == '':
+            # insert as many lines as were joined to retain line numbering
+            for i in range(0, lines_to_insert):
+                yield ''
+            lines_to_insert = 0
+    raise StopIteration()
+
+def file2paragraphs(lines, join_lines=False):
     """
-file2paragraphs(lines)
+file2paragraphs(lines, join_lines=False)
 
 Return a dictionary mapping from line numbers (where paragraph started) to a
-paragraph. The paragraph itself is a list of lines, not ending on\n. The
-parameter must  be iterable, so can be a file object or a list of lines."""
+paragraph. The paragraph itself is a list of lines, not ending on\\n. The
+parameter must  be iterable, so can be a file object or a list of lines.
+If join_lines is set, lines ending on \\ will we joined with the next one.
+"""
     paragraphs = collections.OrderedDict()
     paragraphs[1] = []
-    for lnum, line in enumerate(lines):
+    iterator_wrappper = (newline_wrapper if join_lines else iter)
+    for lnum, line in enumerate(iterator_wrappper(lines)):
         current_paragraph = next(reversed(paragraphs))
         if line.endswith('\n'):
             line = line[:-1]

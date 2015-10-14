@@ -1,35 +1,27 @@
 from distutils.core import setup
-import sys, os
-import MAGSBS.config
+import distutils.command.install_scripts
+import MAGSBS
+import os
+import shutil, sys
 
-#path = os.path.dirname( sys.argv[0] )
-#path = os.path.split( path )[0]
-#path ) # add src root to also install MAGSBS
+class my_install(distutils.command.install_scripts.install_scripts):
+    """Custom script installer. Stript .py extension if not on Windows."""
+    def run(self):
+        distutils.command.install_scripts.install_scripts.run(self)
+        for script in self.get_outputs():
+            if script.endswith(".py") and not ('wind' in sys.platform or 'win32'
+                    in sys.platform):
+                # strip file ending (if not on windows) to make it executable as
+                # a command
+                shutil.move(script, script[:-3])
 
-if(sys.platform.lower().find('win')>= 0):
-    scripts = [os.path.join('cli','matuc.py')],
-    packages = ['MAGSBS']
-    modules = ["MAGSBS.quality_assurance"]
-else:
-    # on UNIX, we want a nice shell script ;)
-    sys.path.append( 'cli' )
-    scripts = [os.path.join('bin','matuc')]
-    packages = ['MAGSBS', 'MAGSBS.quality_assurance']
-    modules = ['matuc']
-
-# install MAGSBS-module
-
-setup(name='MAGSBS',
+setup(name='MAGSBS-matuc',
       version=MAGSBS.config.VERSION,
-      packages=packages,
-      )
+      packages=['MAGSBS', 'MAGSBS.quality_assurance'],
+      scripts=["matuc.py"],
+      cmdclass = {"install_scripts": my_install}
+    )
 
-# matuc distribution:
-os.chdir('cli')
-setup(name='MAGSBS/matuc',
-      version='0.1',
-      py_modules = modules,
-      scripts=scripts
-      )
-
-
+# optional clean up
+if os.path.exists('build'):
+    shutil.rmtree('build')
