@@ -9,3 +9,4 @@
 - add settings for auto increment of page number and footnote_id
 - string can be formatted without selection (see issue #3)
 - some bug fixes
+- add comment for imported table
