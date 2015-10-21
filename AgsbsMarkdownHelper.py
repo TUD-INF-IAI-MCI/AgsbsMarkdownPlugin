@@ -450,7 +450,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         excluded_prefixes = settings.get("excluded_prefixes")
         for (dirname,dirs, files) in os.walk(dir):
             for file in files:
-                if (file.endswith(tuple(imageFormats)) and not(file.startswith(tuple(excluded_prefixes)))):
+                if (file.lower().endswith(tuple(imageFormats)) and not(file.startswith(tuple(excluded_prefixes)))):
                     parentname = os.path.basename(os.path.normpath(dirname))
                     listFiles.append(parentname +"/" + file)
         return listFiles
