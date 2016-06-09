@@ -613,14 +613,14 @@ class ImportCsvTableCommand(sublime_plugin.TextCommand):
         table_markdown = ""
         with open(csvFilename,newline="") as csvfile:
             reader = csv.reader(csvfile, delimiter = " ")
-            for i,row in enumerate(reader):
-                content = "".join(row)
+            for i,row in enumerate(reader):                
+                content = " ".join(row)
                 if i == 1:
                     # e.g. if there are 2 row_delimiter than there are 3 columns
                     # also 4 pipes '|'
                     columns = content.count(settings.get("row_delimiter"))+ 1
                     table_markdown += columns*'| -----------'+'|\n'
-                table_markdown += "|" + "".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"
+                table_markdown += "|" + " ".join(row).replace(settings.get("row_delimiter"),"|")+ "|\n"                
         self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- imported table file " +csvFilename +"-->\n\n"}})
         self.view.run_command("insert_my_text", {"args":{'text': table_markdown}})
         self.view.run_command("insert_my_text", {"args":{'text': "\n\n<!-- end imported table file " +csvFilename +" -->\n\n"}})
