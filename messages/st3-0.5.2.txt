@@ -1,0 +1,3 @@
+# Fixes
+
+- Fix issue #15, missing whitespaces in a imported table

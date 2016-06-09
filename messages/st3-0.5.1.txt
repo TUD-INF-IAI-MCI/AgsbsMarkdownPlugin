@@ -1,3 +1,5 @@
 # Fixes
 
 - Fix bug in image selection list now capital extension are also listed
+
+
