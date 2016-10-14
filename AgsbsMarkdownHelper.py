@@ -339,11 +339,12 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         # just til gladtex is working well
 
         if(settings.get('use_gladtex')):
-            p = pandoc.pandoc()
-        else:
-            p = pandoc.pandoc()
+
+            p = pandoc.HtmlConverter()
+        else:            
+            p = pandoc.Pandoc()
         try:
-            p.convert_file(file_name)
+            p.convert_files([file_name])
         except FileNotFoundError as ex_message:
             sublime.error_message("Sie müssen Pandoc installieren.")
             return
