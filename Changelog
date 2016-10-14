@@ -1,0 +1,47 @@
+Refactoring for support of Sublime Text 3
+
+* add agsbshelper.sublime-setting
+	+ settings are:
+		- debug - opens console and outputs message
+		- hints - opens message boxes with explanation what to do
+		- autosave - saves all changed md-files before generating files
+		- image_formats - which image format will be listed in quickview, default formats are jpg, png, svg
+		- table_default_values - add the value "Wert für Spalte x und Zeile y" (translation value of column x and row y)
+		- autoload_html - if true the generated file (generation with key F6) or index.html (generation with key F6) will be opened in the system default browser
+* add hints for:
+	+ add a link
+	+ add image
+	+ create the structure
+* add error_messages for
+	+ no picture is stored in subfolder images
+	+ no picture is selected
+	+ empty inputs 
+* add menu for (see file Main.sublime-menu)
+	+ formating elements
+	+ inserting elements		
+		- image
+		- link
+		- table
+* usage of magsbs functions for:
+	+ creation of the structure
+	+ conversion of a file or complete book/lecture
+	+ add image syntax
+* autosave of unsaved md-files before running matuc
+* add/modify input GUI for:
+	+ table
+		-input of columns and rows count, format column_count|row_count
+	+ link
+		- input fields are for linktext and url now
+		- testing if https:// or http:// is prefix is link
+	+ image
+		- input field for image title and description
+		- quick view with list of all images in subfolder images
+* syntax checking for:
+	+ for links, test whether url starts with http:// or https:// if not http:// is added
+
+
+
+
+
+	
+	

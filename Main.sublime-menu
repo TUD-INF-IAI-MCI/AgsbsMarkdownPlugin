@@ -1,0 +1,150 @@
+[
+    {
+        "caption": "Preferences",
+        "mnemonic": "n",
+        "id": "preferences",
+        "children":
+        [
+            {
+                "caption": "Package Settings",
+                "mnemonic": "P",
+                "id": "package-settings",
+                "children":
+                [
+                    {
+                        "caption": "AGSBS",
+                        "children":
+                        [
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/User/Agsbs Markdown Helper.sublime-settings"
+                                },
+                                "caption": "Setting - User"
+                            },
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Agsbs Markdown Helper.sublime-settings"
+                                },
+                                "caption": "Setting - Default"
+                            },
+                            { "caption": "-" },
+                            {
+                                "command": "open_file",
+                                "args": {"file": "${packages}/Agsbs Markdown Helper/Default.sublime-keymap",
+                                },
+
+                                "caption": "Shortcuts"
+                            },
+                            {   "caption": "Tastenkürzel",
+                                "children":
+                                [
+                                    {
+                                        "caption": "MATUC Befehle",
+                                        "children": [
+                                                {
+                                                "command": "create_structure",
+                                                "caption": "Struktur generieren"
+                                                },
+                                                {
+                                                "command": "check_with_mk",
+                                                "caption": "Datei überprüfen",
+                                                "args":{"function": "checkFile"}
+                                                },
+                                                {
+                                                "command": "check_with_mk",
+                                                "caption": "Alle Dateien überprüfen",
+                                                "args":{"function": "checkAll"}
+                                                },
+                                                {
+                                                "command": "create_html_file",
+                                                "caption": "HTML-Datei generieren"
+                                                },{
+                                                "command": "create_all",
+                                                "caption": "Alle HTML-Dateien generieren"
+                                                }
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Element hinzufügen",
+                                        "children":[
+                                            {
+                                                "command": "insert_image_panel",
+                                                "caption": "Bild hinzufügen"
+                                            },
+                                            {
+                                                "command": "insert_link_panel",
+                                                "caption": "Link hinzufügen"
+                                            },
+                                            {
+                                                "command": "insert_footnote",
+                                                "caption": "Footnote hinzufügen"
+                                            },
+                                            {
+                                                "command": "create_internal_link",
+                                                "caption": "Internen Link hinzufügen"
+                                            },
+                                            {
+                                                "command": "insert_table",
+                                                "caption": "Tabelle hinzufügen"
+                                            },
+                                            {
+                                                "command": "import_csv_table",
+                                                "caption": "CSV-Tabelle importieren"
+                                            },
+                                            {
+                                                "command": "insert_page",
+                                                "caption": "Seite hinzufügen"
+                                            }
+
+                                        ]
+                                    },
+                                    {
+                                        "caption": "Formatierung",
+                                        "children":[
+                                            {
+                                                "command" : "add_tag",
+                                                "caption": "fett",
+                                                "args": {"tag": "strong", "markdown_str": "**"}
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "em", "markdown_str": "_"},
+                                                "caption": "kursiv"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "hr", "markdown_str": "----------"},
+                                                "caption": "horizontale Linie"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "ol", "markdown_str": "1. "},
+                                                "caption": "nummerierte Liste"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "ul", "markdown_str": "- "},
+                                                "caption": "unnummerierte Liste"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "code", "markdown_str": "\t"},
+                                                "caption": "Quellcode"
+                                            },
+                                            {
+                                                "command" : "add_tag",
+                                                "args": {"tag": "blockqoute", "markdown_str": "> "},
+                                                "caption": "Zitat"
+                                            }
+                                        ]
+
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]
