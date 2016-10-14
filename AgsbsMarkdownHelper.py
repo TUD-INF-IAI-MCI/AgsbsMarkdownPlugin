@@ -9,7 +9,6 @@ import collections
 import webbrowser
 import csv
 
-
 VERSION = int(sublime.version())
 
 reloader = "reloader"
@@ -47,7 +46,7 @@ def plugin_loaded():
     settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')
     sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
     global Debug
-    Debug = settings.get("debug")
+    Debug = False
     global autoload_html
     autoload_html = settings.get("autoload_html")
     global messageBox
@@ -56,6 +55,8 @@ def plugin_loaded():
     console = Console()
     global saver
     saver = Saver()
+    global FoundMkError
+    FoundMkError = False
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
@@ -283,18 +284,40 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
         elif function =="checkAll":
             errors = mk.run(parent)
         if(len(errors) ==0):
-
+            FoundMkError = False
             sublime.message_dialog("Nun denn, ich konnte keine Fehler entdecken.\nHoffen wir, dass es auch wirklich keine gibt ;-).")
-        else:
+        else:            
+            FoundMkError = True
             sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
-            formatter = meta.error_formatter()
-            formatter.set_itemize_sign("  ")
-            console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
+            # formatter = meta.error_formatter()
+            # formatter.set_itemize_sign("  ")
+            message = ""
+            for error in errors:                
+                words = error.message.split()                
+                path = ""
+                errorText = ""
+                messageLineNum = ""
+                messageLines = ""
+                if(error.path):
+                    path = error.path
+                if(error.lineno):              
+                    messageLineNum += "Zeile "+str(error.lineno) +":"
+                else:
+                    messageLineNum += "Hinweis:"                    
+                for word in words:
+                    if len(errorText + word) < 130:
+                       errorText += word + " ";
+                    else:
+                        messageLines += errorText
+                        errorText = "\n\t" + word
+
+                message += "\n" +path + "\n" + messageLineNum + "\n\t" +messageLines + errorText                
+                console.printMessage(self.view,'MK Error', message)
         if(Debug):
             if function == "checkFile":
                 message = "check file " + self.view.window().active_view().file_name() +" with MK"
             elif function == "checkAll":
-                message = "check path " + parent +" with MK"
+                message = "check path " + parent +" with MK"            
             console.printMessage(self.view,'Debug '+function, message)
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
@@ -307,6 +330,7 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         try:
             file_name = self.view.window().active_view().file_name()
             if file_name and file_name.lower().endswith(".md"):
+                self.view.run_command('check_with_mk' , {'function': 'checkAll'})
                 path = os.path.dirname(self.view.window().active_view().file_name())
             else:
                 sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
@@ -317,17 +341,19 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         os.chdir(path)
         # just til gladtex is working well
 
+
         if(settings.get('use_gladtex')):
-            p = pandoc.pandoc()
-        else:
-            p = pandoc.pandoc()
-        try:
-            p.convert_file(file_name)
+            p = pandoc.HtmlConverter()
+        else:            
+            p = pandoc.Pandoc()
+        try:            
+            p.convert_files([file_name])
         except FileNotFoundError as ex_message:
             sublime.error_message("Sie müssen Pandoc installieren.")
             return
         if(autoload_html):
-            print("open in browser",file_name.replace(".md",".html"))
+            if(Debug):
+                print("open in browser",file_name.replace(".md",".html"))
             Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
@@ -338,6 +364,7 @@ class CreateAllCommand(sublime_plugin.TextCommand):
         saver.saveAllDirty()
         try:
             path = os.path.dirname(self.view.window().active_view().file_name())
+            self.view.run_command('check_with_mk' , {'function': 'checkAll'})
         except OSError:
             sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
             return
@@ -501,12 +528,12 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
             img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
         img_desc.set_title(self.dictionary['title'].value.strip())
-        img_output = img_desc.get_output();
+        img_output = img_desc.get_output();        
         if(len(img_output)==1):
-            self.writeMd(img_output[0])
+            self.writeMd(img_output['internal'])
         else:
-            self.writeMd(img_output[0])
-            self.description_extern(img_output[1])
+            self.writeMd(img_output['internal'])
+            self.description_extern(img_output['external'])
         if(Debug):
             console.printMessage(self.view, "Debug image", message)
 

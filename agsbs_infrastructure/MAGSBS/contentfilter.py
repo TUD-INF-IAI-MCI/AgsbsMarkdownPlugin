@@ -1,6 +1,8 @@
-#pylint: disable=redefined-builtin,unused-argument
-# Pylint is right about the errors above, but the additional arguments e.g.
-# where introduced to be compatible with the pandocfilters package.
+# This is free software, licensed under the LGPL v3. See the file "COPYING" for
+# details.
+#
+# (c) 2016 Sebastian Humenda <shumenda |at|gmx |dot| de>
+#pylint: disable=unused-argument
 """
 This module provides some extensions to the python-pandoc API as well as a few
 custom filters for the extended version of MarkDown.
@@ -10,18 +12,18 @@ This way Pandoc preserves the line breaks which ware curcial for alternative
 image descriptions.
 """
 
-from ..lib import pandocfilters as pandocfilters
 import json
-import sys, subprocess, re
+import subprocess
+import sys
+from . import pandocfilters
 from . import config
-from . import datastructures
-from .errors import StructuralError
+from.errors import SubprocessError
 
 
 def html(x):
     """html(x)
 The string x is transformed into an RawBlock for Pandoc's usage."""
-    assert type(x) == str
+    assert isinstance(x, str)
     return pandocfilters.RawBlock('html', x)
 
 def join_para(chunks):
@@ -30,52 +32,46 @@ Pandoc's json is recursively nested. To search for a particular string (like we
         do for page numbers), one has to join all the nested text chunks."""
     str = ''
     for chunk in chunks:
-        if(type(chunk['c']) == list and chunk['t'] == 'Space'):
+        if isinstance(chunk['c'], list) and chunk['t'] == 'Space':
             str += ' '
         else:
             str += chunk['c']
     return str
 
-def generate_link(ltext, id):
-    """GEnerate the HTML paragraph with the HTML anchor and the Text."""
-    return '<p><a name="%s"/>%s</p>' % (id, ltext)
 
 def has_math(key, value, format, meta, modify_ast=False):
     """Return True, if a math environment has been found."""
-    if( key.lower() == "math" ):
+    if key.lower() == "math":
         return True
 
 
-def page_number_extractor(key, value, format, meta, modify_ast=True):
+def page_number_extractor(key, value, format, meta):
     """Scan all paragraphs for those starting with || to parse it for page
 numbering information."""
-    if(modify_ast):
-        if(not (format == 'html' or format == 'html5')):
-            return
-    if key == 'Para':
-        if len(value)>0:
-            text = value[0]['c']
-            if(type(text) == str):
-                if(text.startswith('||')):
-                    text = pandocfilters.stringify( value )
-                    if(re.search(config.PAGENUMBERING_REGEX, text.lower())):
-                        # strip the first ||
-                        text = text[2:]
-                        id = datastructures.gen_id( text )
-                        if(modify_ast):
-                            return html(generate_link(text, id))
-                        else:
-                            return (text, id)
+    if not (format == 'html' or format == 'html5'):
+        return
+    if key == 'Para' and value:
+        text = value[0]['c']
+        if isinstance(text, str): # first chunk of paragraph must be str and contain ||
+            if text.startswith('||'):
+                text = pandocfilters.stringify(value) # get whle text of page number
+                pnum = config.PAGENUMBERING_PATTERN.search(text)
+                if pnum:
+                    # strip the first ||
+                    text = text[2:].lstrip().rstrip()
+                    return html('<p><span id="p{0}">{1}</span></p>'.format(
+                            pnum.groups()[1], text))
+
 
 def suppress_captions(key, value, format, meta, modify_ast=True):
     """Images on a paragraph of its own get a caption, suppress that."""
     if modify_ast and not format in ['html', 'html5']:
         return
     if key == 'Image':
-        # value consists of a list with two items, second contains ('bildpath',
-                # x) where x is either 'fig' for a proper figure with caption or
-        # '' (which is what is desired)
-        value[1][1] = ''
+        # value consists of a list with the last item being a list again; this
+        # list contains (path, 'fig:'), if the latter is removed, caption
+        # vanishes:
+        value[-1][1] = ''
 
 def heading_extractor(key, value, format, meta, modify_ast=False):
     """Extract all headings from the JSon AST."""
@@ -104,24 +100,34 @@ def jsonfilter(doc, action, format='html'):
     return altered
 
 
-def run_pandoc(text):
-    """Return pandoc and return Pandoc AST."""
-    proc = subprocess.Popen(['pandoc', '-f','markdown', '-t','json'], stdin=\
-            subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    data = proc.communicate( text.encode( sys.getdefaultencoding() ) )
+def file2json_ast(file_name):
+    """Read in specified file and return a JSON AST."""
+    with open(file_name, encoding='utf-8') as f:
+        return text2json_ast(f.read())
+
+def text2json_ast(text):
+    """Run pandoc and return parsed JSON AST."""
+    command = ['pandoc', '-f','markdown', '-t','json']
+    proc = subprocess.Popen(command, stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    data = proc.communicate(text.encode(sys.getdefaultencoding()))
     ret = proc.wait()
-    if(ret):
-        print('\n'.join([e.decode( sys.getdefaultencoding() )
-                for e in data]))
-        raise OSError("Pandoc gave error status %s." % ret)
+    if ret:
+        error = '\n'.join([e.decode( sys.getdefaultencoding() )
+                for e in data])
+        raise SubprocessError(' '.join(command),
+        "Pandoc gave error status %s: %s" % (ret, error))
     text = data[0].decode( sys.getdefaultencoding() )
-    return text
+    return json.loads(text)
 
 
-def pandoc_ast_parser(text, action):
-    """Walk the specified JSon tree and apply the supplied action."""
+def json_ast_filter(doc, action):
+    """Walk the specified JSon tree and apply the supplied action. Return all
+    values for which "action" returned something (so effictively filter for
+    None)"""
+    if not isinstance(doc, (dict, list)):
+        raise TypeError("A JSON AST is required, got %s" % type(doc))
     result = []
-    doc = json.loads( text )
     def go(key, value, format, meta):
         res = action(key, value, format, meta, modify_ast=False)
         if(res):
@@ -130,6 +136,7 @@ def pandoc_ast_parser(text, action):
     return result
 
 
+#pylint: disable=too-few-public-methods
 class Text:
     """A text chunk."""
     def __init__(self, text):
@@ -139,6 +146,7 @@ class Text:
     def __str__(self):
         return self.text
 
+#pylint: disable=too-few-public-methods
 class Formula:
     """A formula, represented as displaymath by __str__."""
     def __init__(self, formula):
@@ -148,86 +156,15 @@ class Formula:
     def __repr__(self):
         return 'F<%s>' % self.__str__()
 
-class InlineToDisplayMath:
-    """Parse math formulas and modify them to be always displaymath so that
-    Pandoc will preserve white space."""
-    def __init__(self, document):
-        self.__document = document
-        self.__pieces = []
 
-    def tokenize(self, separator="$", escape='\\'):
-        """Tokenize a string, correctly treating escaped sequences.
-        Each token is a tuple with a line number where this token started and
-        the token itself."""
-        encountered = False
-        token = ''
-        result = []
-        line_number = 1
-        last_token_started_at= 1
-        for c in self.__document:
-            if c == '\n':
-                line_number += 1
-            if not encountered:
-                if c == escape:
-                    encountered = True
-                elif c == separator:
-                    result.append((last_token_started_at, token))
-                    token = ''
-                    last_token_started_at = line_number
-                else:
-                    token += c
-            else: # encountered:
-                if token != separator: # wasn't a escape \, so add it literally
-                    token += '\\'
-                token += c
-                encountered = False
-        result.append((last_token_started_at, token))
-        return result
-
-    def parse(self):
-        """Parse the document string into chunks of Text and Formula's.
-Algorithm (ignoring $$-enclosed formulas); the position in the text is
-implicitly remembered.
-
-1.  Find dollar. If followed by dollar, tread the text before and the two text
-    dollars as text and save it. Continue on this vey same step.
-    - if no dollar found: 5.
-2.  Find the matching dollar sign.
-3.  Text between the two dollars is added as Formula() to self.__pieces.
-4.  Position is updated, start from one.
-5.  Save current position until end as Text() and exit.
-"""
-        ismath = False # set to true after a token wasn't formula, (so is alternating)
-        for lnum, token in self.tokenize():
-            if token == '':
-                continue # ignore, caused by $$ (empty token)
-            token = token.replace('$', '\\$')
-            if ismath:
-                self.__pieces.append('$${}$$'.format(token))
-                ismath = False
-            else: # is ordinary text, if not last_token_empty
-                self.__pieces.append(token)
-                ismath = True
-        if not ismath: # if last was text, ismath has been set to true because
-                    # expecting another math; if last was math it is complicated
-                    # and again negated
-            # try to find a token which is math and contains \n\n; math may not
-            # have a paragraph break, possible error source
-            ismath = False # set to true after a token wasn't formula, (so is alternating)
-            for lnum, token in self.tokenize():
-                if token == '':
-                    continue # ignore, caused by $$ (empty token)
-                token = token.replace('$', '\\$')
-                if ismath and '\n\n' in token:
-                    raise StructuralError(("Somewhere before or after line {}"
-                            " a math environment wasn't ended correctly.").
-                            format(lnum))
-                ismath = not ismath
-            raise StructuralError(("Somewhere in the document a $$-"
-                "environment wasn't closed."))
-
-    def get_document(self):
-        """Return the document as a string."""
-        return ''.join(map(str, self.__pieces))
-
+def get_title(json_ast):
+    nodes_to_visit = json_ast[1] # content of document without meta information
+    for node in nodes_to_visit:
+        if isinstance(node, list):
+            nodes_to_visit.extend(node)
+        elif isinstance(node, dict):
+            # node dictionaries have keys t (type) and c (content)
+            if 't' in node and node.get('t') == 'Header' and 'c' in node:
+                if node['c'][0] == 1: # level 1 heading
+                    return pandocfilters.stringify(node['c'])
 

@@ -1,88 +1,63 @@
+"""Handle lecture and conversion configuration. The configuration is XML in the
+dublincore format (at least roughly) and has a separate namespace for
+MAGSBS-specific extensions.
 """
-Read in user configuration.
-"""
-#pylint: disable=invalid-encoded-data,line-too-long,too-few-public-methods
+# vim: set expandtab sts=4 ts=4 sw=4:
+# This is free software, licensed under the LGPL v3. See the file "COPYING" for
+# details.
+#
+# (c) 2016 Sebastian Humenda <shumenda |at| gmx |dot| de>
+#pylint: disable=line-too-long,too-few-public-methods
 
-import getpass, os, sys
 import datetime
+from distutils.version import StrictVersion
+import os
+import re
+import sys
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from . import common
-from .errors import ConfigurationError, ConfigurationNotFoundError
+from .errors import ConfigurationError
 
-if not (sys.platform.lower().startswith("win")):
-    import pwd
+VERSION = StrictVersion('0.5')
 
-VERSION = '0.3'
 ## default values
 CONF_FILE_NAME = ".lecture_meta_data.dcxml"
-# as a regular expression all kinds of token which can mark a page
-PAGENUMBERINGTOKENS = ['slide','folie','seite','page']
-PAGENUMBERING_REGEX = r'-\s*(' + '|'.join(PAGENUMBERINGTOKENS) + \
-                r')\s+(\d+)\s*-'
 
-VALID_PREFACE_BGN = ['v']
-VALID_MAIN_BGN = ['k', 'blatt', 'Blatt', 'paper']
-VALID_APPENDIX_BGN = ['anh']
-VALID_FILE_BGN = VALID_PREFACE_BGN + VALID_MAIN_BGN + VALID_APPENDIX_BGN
+# all tokens which can mark a start of the page
+PAGENUMBERINGTOKENS = ['slide', 'folie', 'seite', 'page']
+PAGENUMBERINGTOKENS += [t.title() for t in PAGENUMBERINGTOKENS] # recognize with both case spellings
 
-class Singleton:
-    """
-A non-thread-safe helper class to ease implementing singletons.
-This should be used as a decorator -- not a metaclass -- to the class that
-should be a singleton.
-
-The decorated class can define one `__init__` function that takes only the
-`self` argument. Other than that, there are no restrictions that apply to the
-decorated class.
-
-Limitations: The decorated class cannot be inherited from.
-"""
-    def __init__(self, decorated):
-        self._decorated = decorated
-        self._instance = None
-
-    def __call__(self):
-        """Returns the singleton instance. Upon its first call, it creates a
-new instance of the decorated class and calls its `__init__` method.  On all
-subsequent calls, the already created instance is returned.  """
-        if not self._instance:
-            self._instance = self._decorated()
-        return self._instance
-
-    def __instancecheck__(self, inst):
-        return isinstance(inst, self._decorated)
+# regular expression to recognize page numbers
+PAGENUMBERING_PATTERN = re.compile(r'-\s*(' + '|'.join(PAGENUMBERINGTOKENS) + \
+                r')\s+(\d+)\s*-')
 
 def get_semester():
-    """Guess from the time in the year the semester (summer or winter, looking
-    at German semesters, though."""
-    semester = ''
+    """Guess the current semester from the current time. Semesters are based on
+    the German university system."""
     month = datetime.datetime.now().month
-    if month < 4 or month > 10:
-        semester = 'WS'
-        year = datetime.datetime.now().year
-        if month < 4: # if before April, that's still previous winter semester
-            year -= 1
+    year = datetime.datetime.now().year
+    if month < 3 or month >= 9:
+        year = (year-1 if month < 3 else year) # WS starts at end of last year
+        return 'WS {}/{}'.format(year, year+1)
     else:
-        semester = 'SS'
-        year = datetime.datetime.now().year
-    yearstring = str(year)
-    if semester == 'WS': # winter semester stretches across the years boundary:
-        yearstring += '/' + str(year + 1)
-    return '%s %s' % (semester, yearstring)
+        return 'SS {}'.format(year)
 
-def has_configuration(path):
-    """Return whether lecture meta data can be found in the specified path."""
-    if(not path.endswith(CONF_FILE_NAME)):
-        path = os.path.join(path, CONF_FILE_NAME)
-    if(os.path.exists( path )):
-        return True
-    else:
-        return False
+
+def get_lnum_of_tag(path, tag):
+    """Find (xml) `tag` in `path` and return its line number. This function
+    assumes one tag per line, as it is written by the LectureMetaData.write()
+    method."""
+    tag = tag.replace('{http://purl.org/dc/elements/1.1}', ''). \
+            replace('{http://elvis.inf.tu-dresden.de}', 'MAGSBS:')
+    with open(path, 'r', encoding='utf-8') as f:
+        for lnum, line in enumerate(f.read().split('\n')):
+            if tag in line:
+                return lnum + 1
+
 
 class LectureMetaData(dict):
-    """
-The lecture conversion needs meta data which is then embedded into the HTML
+    """The lecture conversion needs meta data which is then embedded into the HTML
 document. Those fields are e.g. source, editor, etc.
 
 This class provides a writer and also a reader for those files. A usage scenario
@@ -112,103 +87,156 @@ semesterofedit  - either WSYY or SS/WSYY, where YY are the last two digits of
 Please note: you should not use this class, except you can make sure that exactly
 one instance at a time exists.
 """
-    def __init__(self, path):
-        "Set default values."
-        self.__path = path
-        self.__numerical = ['tocDepth', 'appendixPrefix', 'pageNumberingGap']
-        self['workinggroup'] = 'AGSBS'
-        if 'win32' in sys.platform or 'wind' in sys.platform:
-            self['editor'] = getpass.getuser()
-        else: # full name with the unix way
-            self['editor'] = pwd.getpwuid(os.getuid())[4]
-            # on some systems, real name end with commas, strip those
-            while self['editor'].endswith(','):
-                self['editor'] = self['editor'][:-1]
-        self['semesterofedit'] = get_semester()
-        self['lecturetitle'] = 'Unknown'
-        self['source'] = 'Unknown'
-        self['institution'] = 'TU Dresden'
-        self['format'] = 'html'
-        self['language'] = 'de'
-        self['rights'] = 'Access limited to members'
-        self['format'] = 'html'
-        self['tocDepth'] = 5
-        self['appendixPrefix'] = 0
-        self['pageNumberingGap'] = 5
-        self['sourceAuthor'] = 'unknown'
-        self.dictkey2xml = {
-                'workinggroup' : 'contributor', 'editor' : 'creator',
-                'semesterofedit' : 'date', 'lecturetitle' : 'title',
+    #   save mapping from dict key (used internally) to XML node (with
+    #   namespace, Python's name space handling is poor)
+    DICTKEY2XML = {'workinggroup' : 'contributor', 'editor' : 'creator',
+            'semesterofedit' : 'date', 'lecturetitle' : 'title',
                 'source' : 'source', 'language':'language',
                 'institution' : 'publisher', 'rights':'rights',
-                'format' : 'format',
-                'tocDepth':'MAGSBS:tocDepth',
+                'format' : 'format', 'tocDepth':'MAGSBS:tocDepth',
                 'appendixPrefix' : 'MAGSBS:appendixPrefix',
                 'pageNumberingGap' : 'MAGSBS:pageNumberingGap',
                 'sourceAuthor':'MAGSBS:sourceAuthor',
+                'generateToc':'MAGSBS:generateToc'
         }
-        dict.__init__(self)
+    DEFAULTS = { 'workinggroup' : 'AG SBS', 'language':'de',
+                'institution' : 'TU Dresden', 'rights': 'Access limited to members',
+                'format' : 'html', 'tocDepth' : 5, 'appendixPrefix' : 0,
+                'pageNumberingGap' : 5, 'generateToc' : 1}
+
+    def __init__(self, file_path, version=VERSION):
+        "Set default values."
+        super().__init__()
+        self.__path = file_path
+        self.__numerical = ['tocDepth', 'appendixPrefix', 'pageNumberingGap',
+                'generateToc']
+        for key in LectureMetaData.DICTKEY2XML:
+            super().__setitem__(key, 'unknown') # initialize all known keys with unknown
+        for key, value in LectureMetaData.DEFAULTS.items():
+            self[key] = value
+        # guess editor
+        if 'win32' in sys.platform or 'wind' in sys.platform:
+            import getpass
+            self['editor'] = getpass.getuser()
+        else: # on unixoids, use pwd
+            import pwd
+            self['editor'] = pwd.getpwuid(os.getuid())[4]
+            # on some systems, real name end with commas, strip those
+            while self['editor'] and not self['editor'][-1].isalpha():
+                self['editor'] = self['editor'][:-1]
+        self['semesterofedit'] = get_semester() # guess current semester
+        self.__changed = False
+        self.__version = version
 
     def write(self):
+        """Write back configuration, if it was changed."""
+        if not self.__changed:
+            return
         root = ET.Element('metadata')
         root.attrib['xmlns:dc'] = 'http://purl.org/dc/elements/1.1'
         root.attrib['xmlns:MAGSBS'] = 'http://elvis.inf.tu-dresden.de'
         for key, value in self.items():
-            if not self.dictkey2xml[key].startswith('MAGSBS:'):
-                c = ET.SubElement(root, 'dc:'+self.dictkey2xml[ key ] )
+            xml_tag = LectureMetaData.DICTKEY2XML[key]
+            if xml_tag.startswith('MAGSBS:'):
+                c = ET.SubElement(root, xml_tag)
             else:
-                c = ET.SubElement(root, self.dictkey2xml[key])
+                c = ET.SubElement(root, 'dc:' + xml_tag)
             c.text = str(value)
+        # add version number
+        c = ET.SubElement(root, 'MAGSBS:version')
+        c.text = str(self.__version)
+        # re-format XML
         out = minidom.parseString('<?xml version="1.0" encoding="UTF-8"?>' + \
                 ET.tostring(root, encoding="unicode")
                 ).toprettyxml(indent="  ", encoding="utf-8")
-        open(self.__path, 'wb').write(out)
+        with open(self.__path, 'wb') as f:
+            f.write(out)
 
-    def normalize_tag(self, tag):
-        if(tag.find('}')>0):
-            return tag[ tag.find('}')+1:]
-        else:
-            return tag
+    def get_path(self):
+        return self.__path
 
     def read(self):
-        if not has_configuration(self.__path):
-            return
-        xmlkey2dict = {}
-        for value,key in self.dictkey2xml.items():
-            if key.startswith('MAGSBS'):
-                key = key.split(':')[1]
-            xmlkey2dict[key] = value
+        normalize_keys = lambda k: k.split(':')[-1] # strip namespace
+        xmlkey2dict = {normalize_keys(key): value
+            for value, key in LectureMetaData.DICTKEY2XML.items()}
 
         with open(self.__path, 'r', encoding='utf-8') as data_source:
             root = ET.fromstring(data_source.read())
+            normalize_tag = lambda x: (x[x.find('}')+1:]  if '}' in x else x)
+            version_read = False
             for child in root:
-                try:
-                    key = xmlkey2dict[self.normalize_tag(child.tag)]
-                except KeyError as e:
-                    common.warn("Unknown key %s, skipping." % e.args[0])
+                key = normalize_tag(child.tag)
+                if key == 'version':
+                    version_read = True
+                    self.__check_for_version(self.__path, child.text)
+                elif not key in xmlkey2dict:
+                    common.WarningRegistry().register_warning(
+                            "Unknown key %s, skipping." % key,
+                            path=self.__path)
                     continue
-                try:
-                    value = child.text
-                    if value in self.__numerical:
-                        try:
-                            value = int( value )
-                        except ValueError:
-                            raise ConfigurationError("Option " + key +
+                else:
+                    key = xmlkey2dict[key] # use the internally used key instead
+                    try:
+                        value = child.text
+                        if value in self.__numerical:
+                            try:
+                                value = int(value)
+                            except ValueError:
+                                raise ConfigurationError("Option " + key +
                                     "has invalid,  non-numerical value of " +
-                                    value)
-                    self[key] = value
-                except IndexError:
-                    print(ET.dump( child ))
+                                    value, self.__path)
+                        self[key] = value
+                    except IndexError:
+                        msg = 'Malformed XML in configuration: ' + ET.dump(child)
+                        raise ConfigurationError(msg, self.__path)
+            if not version_read:
+                self.__check_for_version(self.__path, '0.1')
+        self.__changed = False
+
+    def __check_for_version(self, path, value):
+        """Check whether version exists and fail otherwise."""
+        try:
+            version = StrictVersion(value)
+        except ValueError:
+            raise ConfigurationError("invalid version number: " + repr(value),
+                    path, line=get_lnum_of_tag(path, 'MAGSBS:version'))
+        # check whether the first two digits of the version numbers match;
+        # that'll tread bug fix releases the same
+        if self.__version.version[:2] == version.version[:2]:
+            if self.__version.version[-1] < version.version[-1]: # a newer bug fix release is available
+                common.WarningRegistry().register_warning(("A newer version of "
+                    "Matuc is available: ") + str(version))
+            # do nothing
+        elif version < self.__version:
+            self.__changed = True
+            self.write() # overwrite version number in configuration which is too old
+        else:
+            raise ConfigurationError(("matuc is too old, the configuration "
+                "requires version {}, but version {} is running.").format(version, VERSION),
+                path, get_lnum_of_tag(path, 'MAGSBS:version'))
 
     def __setitem__(self, k, v):
-        if(k in self.__numerical):
+        if k in self.__numerical:
             try:
                 v = int(v)
             except ValueError:
-                raise TypeError("Option " + k + ": not a number (%s)" % v)
-        dict.__setitem__(self, k, v)
+                raise ConfigurationError(("Option {} couldn't be converted to "
+                    "a number: {}").format(k, v), self.__path)
+        if k not in self.keys():
+            raise ConfigurationError("the key %s is unknown" % k, self.__path)
+        super().__setitem__(k, v)
+        self.__changed = True
 
-@Singleton
+    def __eq__(self, other):
+        if not isinstance(other, LectureMetaData):
+            return False
+        # xor will filter the symetric diff. of both dictionaries; they are
+        # equals if there are not elements
+        has_elements = set(self.items()) ^ set(other.items())
+        return not has_elements
+
+
+@common.Singleton
 class confFactory():
     """
 Factory which returns the corresponding instance of a user configuration. They
@@ -220,96 +248,113 @@ configuration and then, if present, the corresponding subdirectory configuration
     def __init__(self):
         self._instances = {}
 
-    def get_conf_instance(self):
-        """Return either an old object if already created or create a new one
-(kind of singleton). Automatically read the configuration upon creation."""
-        path = self.__getpath()
-        if path in self._instances.keys():
-            return self._instances[path]
+    def get_conf_instance(self, path):
+        """get_conf_instance(path)
+        Get a configuration object representing a configuration for a given
+        path.
+        If no configuration is found the method searches in the directories
+        above, as long as it can determine whether it's still in the lecture.
+        If no configuration is found, the default configuation object is
+        returned."""
+        if path is None:
+            raise ValueError("Path expected")
+        elif path == '':
+            path = os.getcwd()
+        if not os.path.exists(path):
+            raise ConfigurationError("specified path doesn't exist", path)
+        elif os.path.isfile(path):
+            path = os.path.dirname(path)
+        conf_path = os.path.abspath(os.path.join(path, CONF_FILE_NAME))
+        if conf_path in self._instances.keys():
+            return self._instances[conf_path]
         else:
+            # check directory above if in a subdirectory of a lecture
+            if not os.path.exists(conf_path) and not common.is_lecture_root(path):
+                dir_above = os.path.split(os.path.abspath(path))[0]
+                if common.is_lecture_root(dir_above):
+                    conf_path = os.path.join(dir_above, CONF_FILE_NAME)
             try:
-                self._instances[ path ] = LectureMetaData( path )
-                self._instances[path].read()
+                self._instances[conf_path] = LectureMetaData(conf_path)
+                if os.path.exists(conf_path):
+                    self._instances[conf_path].read()
             except UnicodeDecodeError:
-                raise ValueError(path + ": File must be encoded in UTF-8")
-        return self._instances[ path ]
+                raise ValueError(conf_path + ": File must be encoded in UTF-8")
+        return self._instances[conf_path]
 
-    def __getpath(self):
-        """__getpath() -> path to configuration file
+    def get_conf_instance_safe(self, path):
+        """Same as get_conf_instance, but returns a default configuration object
+        if configuration could not be read due to an underlying error. This
+        method should be used with care, it might swallow errors. It is intended
+        to be used with the Mistkerl checkers."""
+        try:
+            return self.get_conf_instance(path)
+        except (ET.ParseError, ConfigurationError, OSError, UnicodeDecodeError):
+            return LectureMetaData(path)
 
-If the current directory contains a configuration file, just return the file
-name. If this directory is not the lecture root, look in the lecture root for a
-configuration file. If the lecture root has also no configuration, return the
-lecture root path nevertheless.
-
-Please note: if you are in a subdirectory, this will be a path like ../$CONF_FILE_NAME."""
-        if(os.path.exists(CONF_FILE_NAME)):
-            return CONF_FILE_NAME
-        # cwd != lecture root?
-        path = ''
-        def valid_dir_bgn(s): # cannot be used from file_system, circular dependency
-            for k in VALID_FILE_BGN:
-                if(s.startswith(k) and (len(s) > (len(k))+1)):
-                    if(s[len(k)].isdigit()):
-                        return True
-            return False
-        while(valid_dir_bgn( \
-                    os.path.split( os.path.abspath(path) )[-1])):
-            if(os.path.abspath(os.sep) == os.path.abspath( path )):
-                raise ConfigurationNotFoundError("While searching for a"+\
-                        " configuration file, the root directory was"+\
-                        " reached.\nThis means that this program fails to"+\
-                        " determine the lecture root.\nPlease report this bug.")
-            if(os.path.exists( os.path.join(path, CONF_FILE_NAME) )):
-                break # return this path
-            path = os.path.join(path, '..')
-        # if we reached this, we are in the lecture root
-        return os.path.abspath( os.path.join(path, CONF_FILE_NAME) )
 
 class Translate:
-    """Replace me through gettext, as soon as its clear how easy it is to ship
-l10n with Windows."""
+    """t = Translate()
+    t.set_language(lang)
+    _ = t.get_translation
+    print(_("translate me"))
+
+    Custom translation class which can alter the language according to the set
+    language. set_language raises ValueError if the language is unknown."""
+    supported_languages = ['de', 'fr', 'en']
     def __init__(self):
-        self._factory = confFactory()
-        self.supported_languages = [ 'de', 'fr' ]
         self.en_fr = {
             'preface':'introduction',   'appendix':'appendice',
             'table of contents':'table des matières',
             'chapters':'chapitres',
             'image description of image':"description à l'image",
             'pages':'pages',
-            'index':'index',
             'external image description' : "description de l'image externe",
-            'images':'images',
             'next':'suivant',  'previous':'précédent',
             'chapter':'chapitre', 'paper':'document',
-            'Remarks about the accessible version':'Remarques concernant la version accessible',
+            'remarks about the accessible version':'remarques concernant la version accessible',
+            'note of editor': "Note de l'éditeur",
+            "title page": "couverture",
+            'glossary': 'glossaire',
+            'index': 'index',
+            'list of abbreviations': 'abréviations',
+            'list of tactile graphics': 'list de la graphiques tactiles',
+            'copyright notice': "avis de droit d'auteur",
+            'not edited': 'pas édité'
             }
         self.en_de = {'preface':'vorwort', 'appendix':'anhang',
             'table of contents' : 'inhaltsverzeichnis',
             'chapters':'kapitel',
-            'image description of image':'Bildbeschreibung von Bild',
+            'image description of image':'bildbeschreibung von Bild',
             'pages':'Seiten',
             'external image description':'Bildbeschreibung ausgelagert',
-            'images':'bilder',
-            'index':'Inhalt',
             'next':'weiter',   'previous':'zurück',
             'chapter':'kapitel', 'paper':'blatt',
-            'Remarks about the accessible version':'Hinweise zur der barrierefreien Version'
+            'remarks about the accessible version':'Hinweise zur barrierefreien Version',
+            'note of editor': 'Anmerkung des Bearbeiters',
+            "title page": "Titelseite",
+            'glossary': 'Glossar', 'index': 'index',
+            'list of abbreviations': 'Abkürzungsverzeichnis',
+            'list of tactile graphics': 'Verzeichnis taktiler Grafiken',
+            'copyright notice': 'Hinweise zum Urheberrecht',
+            'not edited': 'nicht Übertragen'
             }
+        self.lang = 'de'
+
+    def set_language(self, lang):
+        if not lang in self.supported_languages:
+            raise ValueError("unsupported language %s; known languages: %s" \
+                    % (lang, ', '.join(self.supported_languages)))
+        self.lang = lang
 
     def get_translation(self, origin):
-        inst = self._factory.get_conf_instance()
-        lang = inst[ 'language' ]
-
+        if self.lang == 'en':
+            return origin
         try:
-            trans = getattr(self, 'en_'+lang)
+            trans = getattr(self, 'en_' + self.lang)
         except AttributeError:
             return origin
         try:
-            return trans[ origin ]
+            return trans[origin]
         except KeyError:
             return origin
 
-L10N = Translate()
-_ = L10N.get_translation
