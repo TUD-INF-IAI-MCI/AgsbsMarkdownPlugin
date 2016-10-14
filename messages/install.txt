@@ -1,1 +1,0 @@
-Installation was successful. You can report bug and other issues at https://github.com/TUD-INF-IAI-MCI/AgsbsMarkdownPlugin/issues.
