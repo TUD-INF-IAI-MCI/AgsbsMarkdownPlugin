@@ -1,12 +1,12 @@
 # This is free software licensed under the LGPL v3. See the file "COPYING" for
 # details.
 #
-# (c) 2014 Sebastian Humenda <shumenda@gmx.de>
-# line-too-long is overriden, because error messages should be not broken up.
+# (c) 2016 Sebastian Humenda <shumenda@gmx.de>
+# line-too-long is overridden, because error messages should be not broken up.
 # Else it is strongly discouraged! Wild-card imports are here because we are
 # importing the mistakes and it is cumbersome to add them to the imports every
 # time a new one is written.
-#pylint: disable=line-too-long,wildcard-import,unused-wildcard-import
+#pylint: disable=wildcard-import,unused-wildcard-import
 
 """
 This sub-module provides implementations for checking common lecture editing
@@ -27,9 +27,10 @@ For the documentation of the mistake types, see the appropriate class."""
 
 import os
 import collections
+from xml.etree import ElementTree as ET
 from .. import filesystem as filesystem
-from ..config import _
-from ..mparser import headingExtractor, pageNumberExtractor
+from .. import config
+from .. import mparser
 
 from .all_formats import *
 from .latex import *
@@ -41,38 +42,33 @@ class Mistkerl():
     def __init__(self):
         self.__issues = [PageNumberIsParagraph, LevelOneHeading,
                 oldstyle_pagenumbering, ItemizeIsParagraph,
-                PageNumberingTextIsLowercase, ForgottenNumberInPageNumber,
-                UniformPagestrings, TooManyHeadings, LaTeXMatricesAreHardToRead,
-                PageNumbersWithoutDashes, DoNotEmbedHTMLLineBreaks,
-                EmbeddedHTMLComperators, PageNumberWordIsMispelled,
-                HeadingOccursMultipleTimes,
+                ForgottenNumberInPageNumber, UniformPagestrings,
+                TooManyHeadings, LaTeXMatricesShouldBeConstructeedUsingPmatrix,
+                LaTeXMatricesShouldHaveLineBreaks, PageNumbersWithoutDashes,
+                DoNotEmbedHtml, EmbeddedHTMLComperators,
+                PageNumberWordIsMispelled, HeadingOccursMultipleTimes,
                 HeadingsUseEitherUnderliningOrHashes, CasesSqueezedOnOneLine,
                 ConfigurationValuesAreAllSet, LaTeXUmlautsUsed,
-                BrokenUmlautsFromPDFFiles]
+                BrokenUmlautsFromPDFFiles,
+                TextInItemizeShouldntStartWithItemizeCharacter,
+                SpacingInFormulaShouldBeDoneWithQuad,
+                BrokenImageLinksAreDetected,
+                HyphensFromJustifiedTextWereRemoved,
+                DisplayMathShouldNotBeUsedWithinAParagraph,
+                UseProperCommandsForMathOperatorsAndFunctions,
+                FormulasSpanningAParagraphShouldBeDisplayMath,
+                DetectEmptyImageDescriptions, DetectStrayingDollars]
         self.__cache_pnums = collections.OrderedDict()
         self.__cached_headings = collections.OrderedDict()
         self.__output = []
-        self.__priority = MistakePriority.normal
-        self.requested_level = MistakePriority.normal
 
-    def get_issues(self, fname):
+    def get_issues(self, required_type, fname=None):
         """Instanciate issue classes and filter for file endings."""
-        for issue in self.__issues:
-            i = issue()
-            if self.get_priority().value >= i.get_priority().value:
-                if fname: # fname exists -> no directory -> check for extension
-                    ext = fname[fname.rfind(".")+1:]
-                    if ext in i.get_file_types():
-                        yield i
-                else:
-                    yield i
-
-    def set_priority(self, p):
-        assert isinstance(p, MistakePriority)
-        self.__priority = p
-
-    def get_priority(self):
-        return self.__priority
+        extension = (os.path.splitext(fname)[1] if fname else 'md').lstrip('.')
+        issues = (i for i in self.__issues
+                if i.mistake_type == required_type)
+        return list(i for i in (i() for i in issues) # instanciate
+            if extension in i.get_file_types())
 
     def run(self, path):
         """Take either a file and run checks or do the same for a directory
@@ -81,119 +77,123 @@ recursively."""
         directoryname = None
         fw = filesystem.FileWalker(path)
         fw.set_ignore_non_chapter_prefixed(False)
-        fw.set_endings(["md","tex", "dcxml"])
-        cwd = os.getcwd()
+        fw.set_endings(["md","tex"])
         for directoryname, dir_list, file_list in fw.walk():
-            os.chdir(directoryname)
             if last_dir is not directoryname:
                 self.run_directory_filters(last_dir)
                 last_dir = directoryname
+                # check configuration
+                if os.path.exists(os.path.join(directoryname, config.CONF_FILE_NAME)):
+                    self.__handle_configuration(directoryname,
+                            config.CONF_FILE_NAME)
+                    continue # do no more checks
 
 
             for file in file_list:
                 file_path = os.path.join(directoryname, file)
-                if file.endswith('dcxml'):
-                    self.__handle_configuration(directoryname, file)
-                    continue # do no more checks
                 try:
-                    paragraphs = filesystem.file2paragraphs( \
-                            open(file, encoding="utf-8"), join_lines=True)
+                    with open(file_path, encoding="utf-8") as f:
+                        paragraphs = mparser.remove_codeblocks(
+                                mparser.file2paragraphs(f.read(), join_lines=True))
                 except UnicodeDecodeError:
-                    e = error_message()
-                    e.set_severity(MistakePriority.critical)
-                    e.set_path(file_path)
-                    e.set_message('Datei ist nicht in UTF-8 kodiert, bitte waehle "UTF-8" als Zeichensatz im Editor.')
+                    msg = 'Datei ist nicht in UTF-8 kodiert, bitte waehle "UTF-8" als Zeichensatz im Editor.'
+                    e = ErrorMessage(msg, 1, file_path)
+                    self.__append_error(path, e)
                     continue
                 self.__run_filters_on_file(file_path, paragraphs)
-            os.chdir(cwd)
         # the last directory must be processed, even so there was no directory
         # change
         self.run_directory_filters(directoryname)
+        # sort output
         return self.__output
 
-    def __append(self, path, err):
+    def __append_error(self, path, err):
         """Add an error to the internal output dict."""
-        if(not err): return
-        if not isinstance(err, error_message):
-            raise TypeError("Errors may only be of type error_message, got '%s'"
+        if not err: return
+        if not isinstance(err, ErrorMessage):
+            raise TypeError("Errors may only be of type ErrorMessage, got '%s'"
                     % str(err))
-        if not err.get_path():
-            err.set_path(path)
+        if not err.path:
+            err.path = path
+        if os.path.dirname(err.path) == '.':
+            err.path = err.path[2:] # strip ./ or .\
         self.__output.append(err)
 
 
     def __run_filters_on_file(self, file_path, paragraphs):
         """Execute all filters which operate on one file. Also exclue filters
-        which do not match for the file ending."""
-        # presort issues
-        fullFile = [e for e in self.get_issues(file_path) \
-                if e.get_type() == MistakeType.full_file]
-        oneLiner = [e for e in self.get_issues(file_path)
-                        if e.get_type() == MistakeType.oneliner]
-        needPnums = [e for e in self.get_issues(file_path)
-                    if e.get_type() == MistakeType.need_pagenumbers]
-        needHeadings = [e for e in self.get_issues(file_path)
-                if e.get_type() == MistakeType.need_headings]
+            which do not match for the file ending."""
+        # check whether file is too long
+        self.__append_error(file_path, self.check_for_overlong_files(file_path,
+            paragraphs))
 
-        try:
-            if next(reversed(paragraphs)) > 2500:
-                e = error_message()
-                e.set_severity(MistakePriority.normal)
-                e.set_path(file_path)
-                e.set_message("Die Datei ist zu lang. Um die "+
-                    " Navigation zu erleichtern und die einfache Lesbarkeit zu"+
-                    " gewährleisten sollten lange Kapitel mit mehr als 2500 " +
-                    "Zeilen in mehrere Unterdateien nach dem Schema kxxyy.md" +
-                    " oder kleiner aufgeteilt werden.")
-                self.__append(file_path, e)
-        except StopIteration:
-            pass # empty file, that we need to except as well
-
-        # ToDo: do not take full list of paragraphs, but rather one paragraph at
-        # a time; so one-liners and paragraph-aware checkers in one loop, better
-        # CPU cache usage
-        for issue in fullFile:
-            self.__append(file_path, issue.run(paragraphs))
+        for issue in self.get_issues(MistakeType.full_file, file_path):
+            self.__append_error(file_path, issue.run(paragraphs))
+        oneliners = self.get_issues(MistakeType.oneliner, file_path)
         for start_line, paragraph in paragraphs.items():
             for lnum, line in enumerate(paragraph):
-                for issue in oneLiner:
+                for issue in oneliners:
                     if issue.should_be_run():
                         res = issue.run(start_line+lnum, line)
                         if res:
-                            self.__append(file_path, res)
+                            self.__append_error(file_path, res)
                             issue.set_run(False)
-        pnums = pageNumberExtractor(paragraphs)
-        hdngs = headingExtractor(paragraphs)
-        # cache headings and page numbers, but only if file is not an image
-        # description file. In those this error category doesn't matter.
-        if _('images') in file_path:
-            self.__cache_pnums[ file_path ] = pnums
-            self.__cached_headings[ file_path ] = hdngs
+            if not any(e.should_be_run() for e in oneliners):
+                break # no oneliner left which needs to be executed
+        pnums = mparser.extract_page_numbers_from_par(paragraphs)
+        hdngs = mparser.extract_headings_from_par(paragraphs)
+        # if the file name does not end of any of the image description names,
+        # it's a "proper" chapter and only for those the cache is relevant
+        if not file_path.endswith("bilder.md"):
+            self.__cache_pnums[file_path] = pnums
+        self.__cached_headings[file_path] = hdngs
 
-        for issue in needPnums:
-            self.__append(file_path, issue.run(pnums))
-        for issue in needHeadings:
-            self.__append(file_path, issue.run(hdngs))
+        for issue in self.get_issues(MistakeType.pagenumbers, file_path):
+            self.__append_error(file_path, issue.run(pnums))
+        for issue in self.get_issues(MistakeType.headings, file_path):
+            self.__append_error(file_path, issue.run(hdngs))
+        # extract formulas and run checkers; file needs to be read again,
+        # because the formula parser operates on a whole file
+        formulas = mparser.parse_formulas(paragraphs)
+        for issue in self.get_issues(MistakeType.formulas, file_path):
+            self.__append_error(file_path, issue.run(formulas))
 
     def run_directory_filters(self, dname):
         """Run all filters depending on the output of a directory."""
-        if(len(self.__cache_pnums) > 0):
-            x = [e for e in self.get_issues(False) \
-                    if e.get_type() == MistakeType.need_pagenumbers_dir]
+        if self.__cache_pnums:
+            x = self.get_issues(MistakeType.pagenumbers_dir)
             for issue in x:
-                self.__append(dname, issue.run(self.__cache_pnums))
+                self.__append_error(dname, issue.run(self.__cache_pnums))
         if self.__cached_headings:
-            x = [e for e in self.get_issues(False) if e.get_type() == MistakeType.need_headings_dir]
+            x = self.get_issues(MistakeType.headings_dir)
             for issue in x:
-                self.__append(dname, issue.run(self.__cached_headings))
+                self.__append_error(dname, issue.run(self.__cached_headings))
         self.__cache_pnums.clear()
         self.__cached_headings.clear()
 
     def __handle_configuration(self, directory, file):
         """Execute all checkers dealing with the configuration."""
-        needConfiguration = [e for e in self.get_issues(file)
-                if e.get_type() == MistakeType.need_configuration]
+        needConfiguration = self.get_issues(MistakeType.configuration, file)
         for issue in needConfiguration:
             path = os.path.join(directory, file)
-            self.__append(path, issue.run(file))
+            try:
+                self.__append_error(path, issue.run(path))
+            except ET.ParseError as e:
+                pos = e.position
+                mistake = ErrorMessage(("Die Konfiguration konnte nicht gelesen"
+                        " werden: ") + e.args[0], pos[0], path)
+                mistake.pos_on_line = pos[1]
+                self.__append_error(path, mistake)
+
+    def check_for_overlong_files(self, file_path, paragraphs):
+        if not paragraphs:
+            return # ignore empty files
+        last_par = next(reversed(paragraphs))
+        if last_par > 2500:
+            msg = ("Die Datei ist zu lang. Um die Navigation zu erleichtern und "
+                "die einfache Lesbarkeit zu gewährleisten sollten lange Kapitel"
+                " mit mehr als 2500 Zeilen in mehrere Unterdateien nach dem "
+                "Schema kxxyy.md oder kleiner aufgeteilt werden.")
+            e = ErrorMessage(msg, last_par, file_path)
+            return e
 

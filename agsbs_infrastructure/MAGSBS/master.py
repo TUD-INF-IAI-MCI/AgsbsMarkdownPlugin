@@ -1,15 +1,19 @@
+# vim: set expandtab sts=4 ts=4 sw=4:
+# This is free software, licensed under the LGPL v3. See the file "COPYING" for
+# details.
+#
+# (c) 2016 Sebastian Humenda <shumenda@gmx.de>
 """For documentation about this module, please refer to its classs master."""
-from . import config
-from . import pandoc
-from . import filesystem
-from . import factories
 
 import os
+from . import config
+from . import errors
+from . import filesystem
+from . import pandoc
+from . import toc
 
 
-_ = config._
-
-class NoLectureConfigurationError(Exception):
+class NoLectureConfigurationError(errors.MAGSBS_error):
     pass
 
 class Master():
@@ -35,7 +39,7 @@ files are converted."""
         for directory in dirs:
             meta = [e for e in os.listdir(directory) if e ==
                     config.CONF_FILE_NAME]
-            if(meta): # found, this is our root
+            if meta: # found, this is our root
                 roots.append(directory)
                 go_deeper = False
             else:
@@ -44,7 +48,7 @@ files are converted."""
                             for e in os.listdir(directory) \
                             if os.path.isdir(os.path.join(directory, e))]
         found_md = False
-        for directory, dlist, flist in os.walk(path):
+        for directory, _, flist in os.walk(path):
             for f in flist:
                 if f.endswith(".md"):
                     found_md = True
@@ -54,6 +58,15 @@ files are converted."""
             raise NoLectureConfigurationError("No configuration in a directory of the path \"%s\" or its subdirectories found. As soon as there are MarkDown files present, a configuration has to exist." % path)
         return roots
 
+    def get_translation(self, word, path):
+        """"Return a translation for a word for a given path.
+        Different paths might have different language configurations. This
+        method loads the individual configuraiton."""
+        conf = config.confFactory().get_conf_instance(path)
+        trans = config.Translate()
+        trans.set_language(conf['language'])
+        return trans.get_translation(word)
+
     def run(self):
         """This function should be used with great care. It shall only be run from
 the root of a lecture. All other attempts will destroy the navigation links and
@@ -62,25 +75,24 @@ result in other undefined behavior.
 This function creates a navigation bar, the table of contents and converts all
 files. It will raise NoLectureConfigurationError when no configuration has been
 found and there are MarkDown files."""
-        cwd = os.getcwd()
+        orig_cwd = os.getcwd()
         for root in self.get_roots():
-            os.chdir( root )
-            # create navigation bar
-            p = filesystem.page_navigation( "." )
-            p.iterate()
-            # create table of contents
-            c = filesystem.create_index( "." )
-            c.walk()
-            if not c.is_empty():
-                index = c.get_index()
-                md_creator = factories.index2markdown_TOC(index)
-                with open(_("index").lower() + ".md", 'w', encoding="utf-8") as file:
-                    file.write(md_creator.get_markdown_page())
+            os.chdir(root)
+            conf = config.confFactory().get_conf_instance(root)
+            if conf['generateToc']:
+                # create table of contents
+                c = toc.HeadingIndexer(".")
+                c.walk()
+                if not c.is_empty():
+                    index = c.get_index()
+                    md_creator = toc.TOCFormatter(index, ".")
+                    with open("inhalt.md", 'w', encoding="utf-8") as file:
+                        file.write(md_creator.format())
 
-            for directory, dlist, flist in filesystem.get_markdown_files( ".", True ):
-                os.chdir(directory)
-                p = pandoc.pandoc()
-                p.convert_files(flist)
-                os.chdir(os.path.join(cwd, root))
-            os.chdir(cwd)
+            conv = pandoc.Pandoc()
+            files_to_convert = [os.path.join(dir, f)
+                    for dir, _, flist in filesystem.get_markdown_files(".", True)
+                    for f in flist]
+            conv.convert_files(files_to_convert)
+            os.chdir(orig_cwd)
 
