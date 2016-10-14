@@ -287,9 +287,30 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
             sublime.message_dialog("Nun denn, ich konnte keine Fehler entdecken.\nHoffen wir, dass es auch wirklich keine gibt ;-).")
         else:
             sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
-            formatter = meta.error_formatter()
-            formatter.set_itemize_sign("  ")
-            console.printMessage(self.view,'MK Error', formatter.format_errors(errors))
+            # formatter = meta.error_formatter()
+            # formatter.set_itemize_sign("  ")
+            message = ""
+            for error in errors:                
+                words = error.message.split()                
+                path = ""
+                errorText = ""
+                messageLineNum = ""
+                messageLines = ""
+                if(error.path):
+                    path = error.path
+                if(error.lineno):              
+                    messageLineNum += "Zeile "+str(error.lineno) +":"
+                else:
+                    messageLineNum += "Hinweis:"                    
+                for word in words:
+                    if len(errorText + word) < 130:
+                       errorText += word + " ";
+                    else:
+                        messageLines += errorText
+                        errorText = "\n\t" + word
+
+                message += "\n" +path + "\n" + messageLineNum + "\n\t" +messageLines + errorText
+        console.printMessage(self.view,'MK Error', message)
         if(Debug):
             if function == "checkFile":
                 message = "check file " + self.view.window().active_view().file_name() +" with MK"
