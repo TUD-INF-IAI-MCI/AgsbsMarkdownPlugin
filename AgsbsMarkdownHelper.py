@@ -9,7 +9,6 @@ import collections
 import webbrowser
 import csv
 
-
 VERSION = int(sublime.version())
 
 reloader = "reloader"
@@ -47,7 +46,7 @@ def plugin_loaded():
     settings = sublime.load_settings('Agsbs Markdown Helper.sublime-settings')
     sublime.save_settings('Agsbs Markdown Helper.sublime-settings')
     global Debug
-    Debug = settings.get("debug")
+    Debug = False
     global autoload_html
     autoload_html = settings.get("autoload_html")
     global messageBox
@@ -56,6 +55,8 @@ def plugin_loaded():
     console = Console()
     global saver
     saver = Saver()
+    global FoundMkError
+    FoundMkError = False
 
 # Make sure all dependencies are reloaded on upgrade
 if reloader in sys.modules:
@@ -283,9 +284,12 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
         elif function =="checkAll":
             errors = mk.run(parent)
         if(len(errors) ==0):
-
+            global FoundMkError
+            FoundMkError = False
             sublime.message_dialog("Nun denn, ich konnte keine Fehler entdecken.\nHoffen wir, dass es auch wirklich keine gibt ;-).")
         else:
+            global FoundMkError
+            FoundMkError = True
             sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
             # formatter = meta.error_formatter()
             # formatter.set_itemize_sign("  ")
@@ -328,6 +332,7 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         try:
             file_name = self.view.window().active_view().file_name()
             if file_name and file_name.lower().endswith(".md"):
+                self.view.run_command('check_with_mk' , {'function': 'checkAll'})
                 path = os.path.dirname(self.view.window().active_view().file_name())
             else:
                 sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
@@ -338,18 +343,19 @@ class CreateHtmlFileCommand(sublime_plugin.TextCommand):
         os.chdir(path)
         # just til gladtex is working well
 
-        if(settings.get('use_gladtex')):
 
+        if(settings.get('use_gladtex')):
             p = pandoc.HtmlConverter()
         else:            
             p = pandoc.Pandoc()
-        try:
+        try:            
             p.convert_files([file_name])
         except FileNotFoundError as ex_message:
             sublime.error_message("Sie müssen Pandoc installieren.")
             return
         if(autoload_html):
-            print("open in browser",file_name.replace(".md",".html"))
+            if(Debug):
+                print("open in browser",file_name.replace(".md",".html"))
             Browser(file_name.replace(".md",".html"))
 
 class CreateAllCommand(sublime_plugin.TextCommand):
@@ -360,6 +366,7 @@ class CreateAllCommand(sublime_plugin.TextCommand):
         saver.saveAllDirty()
         try:
             path = os.path.dirname(self.view.window().active_view().file_name())
+            self.view.run_command('check_with_mk' , {'function': 'checkAll'})
         except OSError:
             sublime.error_message("Öffnen Sie eine Markdown-Datei um die Convertierung zu starten")
             return
