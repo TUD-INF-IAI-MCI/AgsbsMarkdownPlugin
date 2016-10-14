@@ -284,11 +284,9 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
         elif function =="checkAll":
             errors = mk.run(parent)
         if(len(errors) ==0):
-            global FoundMkError
             FoundMkError = False
             sublime.message_dialog("Nun denn, ich konnte keine Fehler entdecken.\nHoffen wir, dass es auch wirklich keine gibt ;-).")
-        else:
-            global FoundMkError
+        else:            
             FoundMkError = True
             sublime.error_message("MK hat Fehler gefunden, weiteren Information \nfinden sie in auf der Console.")
             # formatter = meta.error_formatter()
@@ -313,13 +311,13 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
                         messageLines += errorText
                         errorText = "\n\t" + word
 
-                message += "\n" +path + "\n" + messageLineNum + "\n\t" +messageLines + errorText
-        console.printMessage(self.view,'MK Error', message)
+                message += "\n" +path + "\n" + messageLineNum + "\n\t" +messageLines + errorText                
+                console.printMessage(self.view,'MK Error', message)
         if(Debug):
             if function == "checkFile":
                 message = "check file " + self.view.window().active_view().file_name() +" with MK"
             elif function == "checkAll":
-                message = "check path " + parent +" with MK"
+                message = "check path " + parent +" with MK"            
             console.printMessage(self.view,'Debug '+function, message)
 
 class CreateHtmlFileCommand(sublime_plugin.TextCommand):
@@ -530,12 +528,12 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
             img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
         img_desc.set_title(self.dictionary['title'].value.strip())
-        img_output = img_desc.get_output();
+        img_output = img_desc.get_output();        
         if(len(img_output)==1):
-            self.writeMd(img_output[0])
+            self.writeMd(img_output['internal'])
         else:
-            self.writeMd(img_output[0])
-            self.description_extern(img_output[1])
+            self.writeMd(img_output['internal'])
+            self.description_extern(img_output['external'])
         if(Debug):
             console.printMessage(self.view, "Debug image", message)
 
