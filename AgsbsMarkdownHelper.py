@@ -484,7 +484,7 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
             for file in files:
                 if (file.lower().endswith(tuple(imageFormats)) and not(file.startswith(tuple(excluded_prefixes)))):
                     parentname = os.path.basename(os.path.normpath(dirname))
-                    listFiles.append(parentname +"/" + file)
+                    listFiles.append(parentname + "/" + file)
         return listFiles
 
     def show_prompt(self, listFile):
@@ -526,19 +526,36 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         }
         """
         message = ""
-        img_desc = factories.ImageDescription(self.dictionary['location'].value)
+        file_name = self.view.window().active_view().file_name()       
+        os.chdir(os.path.dirname(file_name)) # is folder k0x
+        os.chdir("..")        
+        wd = os.getcwd()
+        imgPath = os.path.dirname(file_name) + os.sep + "bilder"
+        os.chdir(imgPath)                            
+        img_desc = factories.ImageDescription(os.path.dirname(file_name) +os.sep + self.dictionary['location'].value)
         if img_desc.img_maxlength > len(self.dictionary['description'].value):
             img_desc.set_outsource_descriptions(False)
         else:
             img_desc.set_outsource_descriptions(True)
         img_desc.set_description(self.dictionary['description'].value)
         img_desc.set_title(self.dictionary['title'].value.strip())
-        img_output = img_desc.get_output();        
+        img_output = img_desc.get_output();       
+        markdownInternal = img_output['internal'].replace(os.path.dirname(file_name).replace("\\","/"), "")                        
+        lectureMetaData = config.LectureMetaData(os.path.join(wd,".lecture_meta_data.dcxml"))
+        lectureMetaData.read();
+        if lectureMetaData['language'] == "de":
+            markdownInternal = markdownInternal.replace("images","bilder")
+            markdownInternal = markdownInternal.replace("/bilder", "bilder")
+        elif lectureMetaData['language'] == "en":
+            markdownInternal = markdownInternal.replace("/images", "images")
+            markdownInternal = markdownInternal.replace("/bilder", "bilder")
+            markdownInternal = markdownInternal.replace("bilder.html","images.html")        
         if(len(img_output)==1):
-            self.writeMd(img_output['internal'])
+            self.writeMd(markdownInternal)
         else:
-            self.writeMd(img_output['internal'])
+            self.writeMd(markdownInternal)
             self.description_extern(img_output['external'])
+
         if(Debug):
             console.printMessage(self.view, "Debug image", message)
 
@@ -551,13 +568,31 @@ class InsertImagePanelCommand(sublime_plugin.TextCommand):
         """
             try to load bilder.md file or create
         """
-        fd = os.open(base +os.sep + 'bilder.md', os.O_RDWR|os.O_CREAT)
+        os.chdir(base)
+        os.chdir("..")
+        wd = os.getcwd()
+        lectureMetaData = config.LectureMetaData(os.path.join(wd,".lecture_meta_data.dcxml"))
+        lectureMetaData.read();
+        nameDscFile = ""
+        if lectureMetaData['language'] == "de":
+            nameDscFile = 'bilder.md'
+        elif lectureMetaData['language'] == "en":
+            nameDscFile = 'images.md'
+        fd = os.open(base +os.sep + nameDscFile, os.O_RDWR|os.O_CREAT)
         os.close(fd)
-        heading_level_one = '# Bilderbeschreibungen \n\n'
-        with codecs.open(base +os.sep + 'bilder.md', "r+", encoding="utf-8") as fd:
+    
+        
+        img_desc_file = ""
+        if lectureMetaData['language'] == "de":
+            heading_level_one = '# Bilderbeschreibungen \n\n'
+            img_desc_file = "bilder.md"
+        elif lectureMetaData['language'] == "en":
+            heading_level_one = '# Image description \n\n'
+            img_desc_file = "images.md"
+        with codecs.open(base +os.sep + img_desc_file, "r+", encoding="utf-8") as fd:
             if len(fd.readlines()) <=0:
                 fd.write(heading_level_one)
-        with codecs.open(base +os.sep + 'bilder.md', "a+", encoding="utf-8") as fd:
+        with codecs.open(base +os.sep + img_desc_file, "a+", encoding="utf-8") as fd:
             fd.write("\n"+description)
 
 
@@ -897,5 +932,6 @@ class InsertFootnoteCommand(sublime_plugin.TextCommand):
         #  if canceled, index is returned as  -1
         if input == -1:
             return
+
 
 
