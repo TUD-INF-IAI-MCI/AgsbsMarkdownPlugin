@@ -1,7 +1,7 @@
 Agsbs Markdown Helper
 ===================
 
-Latest Release for Sublime Text 3 is st3-0.5.1
+Latest Release for Sublime Text 3 is st3-0.6.1
 
 
 This is a sublime plugin which is used in our working group. Our working group is transcribing study materials
@@ -15,9 +15,10 @@ After the creation of the Markdown files a customized pandoc converter is used f
 The plugin offered different functions to fulfil our guidelines, add Markdown content and
 helps unknown transcribers to create markdown-files.
 
+<!--
+
 A details description of all functions and shortcuts will be written soon.
 
-<!--
 ### The directory structure of material
 
 The shortcut F2 opens the dialog for the input of the title, chaptercount, language, preface.
