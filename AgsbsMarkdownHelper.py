@@ -219,10 +219,15 @@ class CreateStructureCommand(sublime_plugin.TextCommand):
         path = sublime.active_window().folders()[0]
         cwd = os.getcwd()
         os.chdir(path)
-        builder = filesystem.init_lecture(path, self.dictionary['chapter_count'].value,
+        builder = filesystem.InitLecture(path, self.dictionary['chapter_count'].value,
                 lang=self.dictionary['language'].value)
         builder.set_has_preface(self.dictionary['preface'].value)
         builder.generate_structure()
+        lectureMetaData = config.LectureMetaData(path + os.sep + ".lecture_meta_data.dcxml");
+        lectureMetaData.read();
+        lectureMetaData['lecturetitle'] = self.dictionary['title'].value
+        lectureMetaData.write();
+        
         if(Debug):
             console = Console()
             console.printMessage(self.view,'Debug',path)
