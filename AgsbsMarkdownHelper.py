@@ -306,10 +306,10 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
                     messageLineNum += "Hinweis:"                    
                 for word in words:
                     if len(errorText + word) < 130:
-                       errorText += word + " ";
+                       errorText += word + " "
                     else:
                         messageLines += errorText
-                        errorText = "\n\t" + word
+                        errorText = "\n\t" + word + " "
 
                 message += "\n" +path + "\n" + messageLineNum + "\n\t" +messageLines + errorText                
                 console.printMessage(self.view,'MK Error', message)
