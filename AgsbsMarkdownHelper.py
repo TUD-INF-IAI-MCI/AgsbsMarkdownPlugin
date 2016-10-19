@@ -269,6 +269,7 @@ class CheckWithMkCommand(sublime_plugin.TextCommand):
 { "keys": ["f4"], "command": "check_with_mk" , "args": {"function": "checkAll"} }
     """
     def run(self, edit, function):
+        console.printMessage(self.view,'', 20*"\n")
         saver.saveAllDirty()
         try:
             file_name = self.view.window().active_view().file_name()

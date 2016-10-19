@@ -1,0 +1,4 @@
+# Changes
+
+- Fix problems with message showing after the update
+- add multiple empty lines before a error message 
