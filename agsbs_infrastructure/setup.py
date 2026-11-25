@@ -1,13 +1,13 @@
-from distutils.core import setup
-import distutils.command.install_scripts
+from setuptools import setup
+import setuptools.command.install_scripts
 import MAGSBS
 import os
 import shutil, sys
 
-class my_install(distutils.command.install_scripts.install_scripts):
+class my_install(setuptools.command.install_scripts.install_scripts):
     """Custom script installer. Stript .py extension if not on Windows."""
     def run(self):
-        distutils.command.install_scripts.install_scripts.run(self)
+        setuptools.command.install_scripts.install_scripts.run(self)
         for script in self.get_outputs():
             if script.endswith(".py") and not ('wind' in sys.platform or 'win32'
                     in sys.platform):

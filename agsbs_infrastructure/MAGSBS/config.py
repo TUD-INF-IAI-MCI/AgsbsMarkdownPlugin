@@ -10,7 +10,7 @@ MAGSBS-specific extensions.
 #pylint: disable=line-too-long,too-few-public-methods
 
 import datetime
-from distutils.version import StrictVersion
+import functools
 import os
 import re
 import sys
@@ -18,6 +18,27 @@ import xml.etree.ElementTree as ET
 from xml.dom import minidom
 from . import common
 from .errors import ConfigurationError
+
+@functools.total_ordering
+class StrictVersion:
+    """Minimal stand-in for distutils.version.StrictVersion (removed in
+    Python 3.12): "X.Y" or "X.Y.Z", compared numerically."""
+    def __init__(self, vstring):
+        parts = vstring.split('.')
+        if not 2 <= len(parts) <= 3 or not all(p.isdigit() for p in parts):
+            raise ValueError("invalid version number '%s'" % vstring)
+        self.version = tuple(int(p) for p in parts) + (0,) * (3 - len(parts))
+
+    def __str__(self):
+        v = self.version[:2] if self.version[2] == 0 else self.version
+        return '.'.join(map(str, v))
+
+    def __eq__(self, other):
+        return self.version == other.version
+
+    def __lt__(self, other):
+        return self.version < other.version
+
 
 VERSION = StrictVersion('0.5')
 

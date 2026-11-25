@@ -8,7 +8,10 @@ reload_mods = []
 
 if VERSION > 3000:
     mod_prefix = "AgsbsMarkdownPlugin." + mod_prefix
-    from imp import reload
+    try:
+        from importlib import reload
+    except ImportError:  # Python 3.3
+        from imp import reload
     for mod in sys.modules:
         if mod[0:24] == 'AgsbsMarkdownPlugin' and sys.modules[mod] is not None:
             reload_mods.append(mod)
